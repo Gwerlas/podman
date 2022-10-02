@@ -1,0 +1,18 @@
+---
+- name: Max user namespaces
+  become: true
+  ansible.builtin.sysctl:
+    name: user.max_user_namespaces
+    value: "{{ podman_max_user_namespaces }}"
+  when: podman_max_user_namespaces is defined
+
+- name: Subuid and Subgid files
+  become: true
+  ansible.builtin.template:
+    src: subid.j2
+    dest: "{{ item }}"
+    mode: 0644
+  with_items:
+    - /etc/subuid
+    - /etc/subgid
+  register: _podman_subids

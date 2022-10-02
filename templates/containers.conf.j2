@@ -1,0 +1,31 @@
+{%- if podman_containers_defaults is defined -%}
+    {%- set defaults = podman_containers_defaults -%}
+{%- else -%}
+    {%- set defaults = {} -%}
+{%- endif -%}
+
+{%- if podman_containers_config is defined -%}
+    {%- set config = podman_containers_config -%}
+{%- else -%}
+    {%- set config = {} -%}
+{%- endif -%}
+
+{%- set data = defaults | combine(config) -%}
+
+{% if data.containers is defined %}
+    [containers]
+    {% for key, value in data.containers.items() %}
+        {% if value is string %}
+            {{ key }} = "{{ value }}"
+        {% elif value is string %}
+            {{ key }} = "{{ value }}"
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+{% if data.engine is defined %}
+    [engine]
+    {% if data.engine.cgroup_manager is defined %}
+        cgroup_manager = "{{ data.engine.cgroup_manager }}"
+    {% endif %}
+{% endif %}

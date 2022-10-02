@@ -1,0 +1,8 @@
+---
+podman_packages:
+  - podman
+
+podman_max_user_namespaces: 15000
+
+podman_mimic_docker_type: symlink
+podman_mimic_docker_symlink: /usr/bin/docker

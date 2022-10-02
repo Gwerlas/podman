@@ -1,0 +1,41 @@
+{%- if podman_storage_defaults is defined -%}
+    {%- set defaults = podman_storage_defaults -%} 
+{%- else -%} 
+    {%- set defaults = {} -%} 
+{%- endif -%} 
+
+{%- if podman_storage_config is defined -%}
+    {%- set config = podman_storage_config -%} 
+{%- else -%} 
+    {%- set config = {} -%} 
+{%- endif -%} 
+
+{%- set data = defaults | combine(config) -%} 
+
+{% if data.storage is defined %}
+    [storage]
+    {% for key, value in data.storage.items() %}
+        {% if value is string %}
+            {{ key }} = "{{ value }}"
+        {% endif %}
+    {% endfor %} 
+
+    {% if data.storage.options is defined %}
+        [storage.options]
+        {% if data.storage.options.additionalimagestores.items() is defined %}
+            additionalimagestores = {{ data.storage.options.additionalimagestores | list }}
+        {% endif %}
+        {% for key, value in data.storage.options.items() %}
+            {% if key != "additionalimagestores" %}
+                {{ key }} = "{{ value }}"
+            {% endif %}
+        {% endfor %}
+
+        {% if data.storage.options.thinpool is defined %}
+            [storage.options.thinpool]
+            {% for key, value in data.storage.options.thinpool.items() %}
+                {{ key }} = "{{ value }}"
+            {% endfor %} 
+        {% endif %} 
+    {% endif %} 
+{% endif %} 

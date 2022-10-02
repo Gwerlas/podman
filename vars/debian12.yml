@@ -1,0 +1,15 @@
+---
+podman_compose_packages:
+  - podman-compose
+
+podman_toolbox_packages:
+  - podman-toolbox
+
+podman_packages:
+  - slirp4netns
+  - fuse-overlayfs
+  - rootlesskit
+  - podman
+
+podman_mimic_docker_type: package
+podman_mimic_docker_package: podman-docker

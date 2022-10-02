@@ -1,0 +1,16 @@
+---
+- name: Reset connection to take effect of subids changes
+  listen: podman system migrate
+  ansible.builtin.meta: reset_connection
+  when:
+    - ansible_user_id != 'root'
+    - ansible_user_id in podman_users
+
+- name: Migrate podman ressources
+  listen: podman system migrate
+  become: true
+  become_user: "{{ item }}"
+  ansible.builtin.command:
+    cmd: podman system migrate
+  changed_when: true
+  with_items: "{{ podman_users }}"

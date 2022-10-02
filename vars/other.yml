@@ -1,0 +1,6 @@
+---
+podman_packages:
+  - podman
+
+podman_mimic_docker_type: symlink
+podman_mimic_docker_symlink: /usr/bin/docker

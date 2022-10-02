@@ -1,0 +1,26 @@
+unqualified-search-registries = {{ podman_registries_config['unqualified-search-registries'] | list }}
+{% if podman_registries_config['short-name-mode'] is defined %}
+short-name-mode = "{{ podman_registries_config['short-name-mode'] }}"
+{% endif %}
+
+{% if podman_registries_config['registry'] | length %}
+{% for registry in podman_registries_config['registry'] %}
+[[registry]]
+prefix = "{{ registry.prefix }}"
+insecure = {{ registry.insecure | bool }}
+blocked = {{ registry.blocked | bool }}
+
+{% if registry.location is defined %}
+location = "{{ registry.location }}"
+{% endif %}
+
+
+{% if registry.mirror is list %}
+{% for mirror in registry.mirror %}
+[[registry.mirror]]
+location = "{{ mirror.location }}"
+insecure = {{ mirror.insecure | bool }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}

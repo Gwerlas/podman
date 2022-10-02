@@ -1,0 +1,28 @@
+---
+argument_specs:
+  main:
+    short_description: Install and configure postman
+    options:
+      podman_mimic_docker:
+        description: Mimic Docker to be compatible with scripts calling Docker-CLI
+        type: bool
+        default: "false"
+  packages:
+    short_description: Install the packages.
+    options:
+      podman_compose_install:
+        description: Install podman compose
+        type: bool
+        default: "false"
+      podman_toolbox_install:
+        description: Install podman toolbox
+        type: bool
+        default: "false"
+  rootless:
+    short_description: Configure node for rootless mode.
+    options:
+      podman_users:
+        description: List of users that can run podman
+        type: list
+        elements: str
+        default: "['{{ ansible_user_id }}']"

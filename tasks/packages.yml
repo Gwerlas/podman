@@ -1,0 +1,30 @@
+---
+- name: Podman packages
+  become: true
+  ansible.builtin.package:
+    name: "{{ podman_packages }}"
+    
+- name: Podman compose packages
+  ansible.builtin.package:
+    name: "{{ podman_compose_packages }}"
+  when:
+    - podman_compose_install
+    - podman_compose_packages | length
+    
+- name: Podman toolbox packages
+  ansible.builtin.package:
+    name: "{{ podman_toolbox_packages }}"
+  when:
+    - podman_toolbox_install
+    - podman_toolbox_packages | length
+
+# Register the podman version for specifics behaviours
+- name: Get the version of podman
+  ansible.builtin.command:
+    cmd: podman --version
+  changed_when: false
+  register: _podman_version
+
+- name: Register the current version number
+  ansible.builtin.set_fact:
+    podman_current_version: "{{ _podman_version.stdout.split(' ')[2] }}"

@@ -1,0 +1,8 @@
+---
+podman_compose_install: false
+podman_toolbox_install: false
+
+podman_mimic_docker: false
+
+podman_users:
+  - "{{ ansible_user_id }}"

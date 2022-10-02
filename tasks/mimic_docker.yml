@@ -1,0 +1,48 @@
+---
+- name: Run docker --version
+  ansible.builtin.command:
+    cmd: docker --version
+  register: _docker_version
+  changed_when: false
+  failed_when: false
+
+- name: Skip due to Docker presence
+  ansible.builtin.fail:
+    msg: Docker is installed
+  when: _docker_version.stdout is match "Docker"
+
+- name: Symlink docker to podman
+  become: true
+  ansible.builtin.file:
+    src: /usr/bin/podman
+    dest: "{{ podman_mimic_docker_symlink }}"
+    state: link
+  when: podman_mimic_docker_type == 'symlink'
+
+- name: Podman docker mimic package
+  become: true
+  ansible.builtin.package:
+    name: "{{ podman_mimic_docker_package }}"
+  when: podman_mimic_docker_type == 'package'
+
+- name: Network resources
+  when: podman_current_version is version('3.0', '>=')
+  block:
+    - name: Podman service
+      become: "{{ item != ansible_user_id }}"
+      become_user: "{{ item }}"
+      ansible.builtin.systemd:
+        name: podman
+        state: started
+        enabled: true
+      with_items: "{{ podman_users }}"
+    
+    - name: Docker environment variables
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/environment
+        line: "{{ item }}"
+        regex: "^{{ item.split('=')[0] }}="
+      with_items:
+        - DOCKER_BUILDKIT=0
+        - DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock

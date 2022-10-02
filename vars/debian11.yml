@@ -1,0 +1,15 @@
+---
+podman_packages:
+  - slirp4netns
+  - fuse-overlayfs
+  - rootlesskit
+  - podman
+
+podman_mimic_docker_type: symlink
+podman_mimic_docker_symlink: /usr/bin/docker
+
+podman_containers_defaults:
+  containers:
+    log_driver: journald
+  engine:
+    cgroup_manager: cgroupfs

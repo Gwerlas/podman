@@ -1,0 +1,13 @@
+---
+podman_compose_packages:
+  - podman-compose
+  - podman-dnsname
+
+podman_packages:
+  - buildah
+  - slirp4netns
+  - fuse-overlayfs
+  - podman
+
+podman_mimic_docker_type: package
+podman_mimic_docker_package: podman-docker
