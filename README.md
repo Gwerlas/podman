@@ -37,6 +37,10 @@ Role Variables
 Available variables are listed below, along with default values (see `defaults/main.yml`):
 
 ```yaml
+# podman_containers_config: {}
+# podman_registries_config: {}
+# podman_storage_config: {}
+
 podman_compose_install: false
 podman_toolbox_install: false
 
@@ -44,6 +48,101 @@ podman_mimic_docker: false
 
 podman_users:
   - "{{ ansible_user_id }}"
+```
+
+### Podman configuration
+
+By default, we let the configuration files of the distribution inchanged.
+
+Except for the Debian 11 containers settings who does not work out of the box.
+
+To use a customized configuration, use `podman_*_config` settings.
+
+#### Containers
+
+Use the `podman_containers_config` dictionary to populate the `/etc/containers/containers.conf`
+file following the same structure as the toml described in [`containers.conf`][] man page.
+
+[`containers.conf`]: https://man.archlinux.org/man/containers.conf.5.en
+
+For example :
+
+```yaml
+podman_containers_config:
+  containers:
+    log_driver: journald
+  engine:
+    cgroup_manager: cgroupfs
+```
+
+Will generate the `/etc/containers/containers.conf` bellow :
+
+```ini
+[containers]
+log_drivers = "journald"
+
+[engine]
+cgroup_manager = "cgroupfs"
+```
+
+For Debian 11 only, we overwrite the distribution defaults by the configuration above.
+
+#### Registries
+
+**NOTE** We do not support the deprecated version 1 format.
+
+Use the `podman_registries_config` dictionary to populate the `/etc/containers/registries.conf`
+file following the same structure as the toml described in [`registries.conf`][] man page.
+
+[`registries.conf`]: https://man.archlinux.org/man/containers-registries.conf.5
+
+For example :
+
+```yaml
+podman_registries_config:
+  unqualified-search-registries:
+    - docker.io
+  registry:
+    - location: my-insecure-registry:5000
+      insecure: true
+```
+
+Will generate the `/etc/containers/registries.conf` bellow :
+
+```ini
+unqualified-search-registries = ['docker.io']
+
+[[registry]]
+location = my-insecure-registry:5000
+insecure = true
+```
+
+#### Storage
+
+Use the `podman_storage_config` dictionary to populate the `/etc/containers/storage.conf`
+file following the same structure as the toml described in [`storage.conf`][] man page.
+
+[`storage.conf`]: https://github.com/containers/storage/blob/main/docs/containers-storage.conf.5.md
+
+For example :
+
+```yaml
+podman_storage_config:
+  storage:
+    driver: zfs
+    options:
+      zfs:
+        mountopt: "nodev"
+```
+
+Will generate the `/etc/containers/storage.conf` bellow :
+
+```ini
+[storage]
+driver = "zfs"
+
+[storage.options.zfs]
+mountopt = "nodev"
 ```
 
 ### Podman compose
@@ -61,32 +160,42 @@ for the distribution of the targetted host.
 #### Docker in the $PATH
 
 You can mimic Docker throw the `podman_mimic_docker` parameter set to `true`. If the package
-`podman-docker` is available for the target Linux distribution, il will be installed, or a
-symlink will be created either.
+`podman-docker` is available for the target Linux distribution, il will be installed, in the
+other cases a symlink will be created.
 
-So the scripts calling `docker` will transparently use `podman` instead.
+So the scripts calling `docker` will transparently use `podman` instead, or almost.
 
 #### Daemon socket
 
-If the installed version of Podman is `3.0` or upper, the service will be started and
-enabled and the environment variables `DOCKER_BUILDKIT` and `DOCKER_HOST` will be respectively set to `0`
-and `$XDG_RUNTIME_DIR/podman/podman.sock`.
+If the installed version of Podman is `3.0` or upper, the service will be enabled for each
+`podman_users` and the environment variables `DOCKER_BUILDKIT` and `DOCKER_HOST` will be
+respectively set to `0` and `$XDG_RUNTIME_DIR/podman/podman.sock`.
 
-So you will be able to reach podman throw the Unix socket or the network like Docker does.
+So you will be able to run Docker in Podman.
 
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+None.
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+An exemple of the way to be the more compatible with Docker as You can :
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+```yaml
+---
+- name: Docker compatible
+  hosts: all
+  roles:
+    - name: gwerlas.system
+    - name: gwerlas.podman
+      vars:
+        podman_mimic_docker: true
+        podman_registries_config:
+          unqualified-search-registries:
+            - docker.io
+```
 
 Facts
 -----

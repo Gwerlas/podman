@@ -1,4 +1,5 @@
-{%- if podman_containers_defaults is defined -%}
+# {{ ansible_managed }}
+{% if podman_containers_defaults is defined -%}
     {%- set defaults = podman_containers_defaults -%}
 {%- else -%}
     {%- set defaults = {} -%}
@@ -10,22 +11,20 @@
     {%- set config = {} -%}
 {%- endif -%}
 
-{%- set data = defaults | combine(config) -%}
+{%- set data = defaults | combine(config) %}
 
-{% if data.containers is defined %}
-    [containers]
-    {% for key, value in data.containers.items() %}
-        {% if value is string %}
-            {{ key }} = "{{ value }}"
-        {% elif value is string %}
-            {{ key }} = "{{ value }}"
-        {% endif %}
-    {% endfor %}
+{% for section in ['containers', 'engine', 'network', 'machine', 'service_destinations', 'secret'] %}
+{% if data[section] is defined %}
+[{{ section }}]
+{% for key, value in data[section].items() %}
+{% if value is string %}
+{{ key }} = "{{ value }}"
+{% elif value is boolean %}
+{{ key }} = {{ value | lower }}
+{% else %}
+{{ key }} = {{ value }}
 {% endif %}
+{% endfor %}
 
-{% if data.engine is defined %}
-    [engine]
-    {% if data.engine.cgroup_manager is defined %}
-        cgroup_manager = "{{ data.engine.cgroup_manager }}"
-    {% endif %}
 {% endif %}
+{% endfor %}

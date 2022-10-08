@@ -1,27 +1,32 @@
 ---
 - name: Distribution specific values
   ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
+  register: podman_included_vars
   vars:
     params:
       files:
-        #- "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
-        - "{{ ansible_distribution | lower }}{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}{{ ansible_distribution_major_version }}.yml"
         - "{{ ansible_distribution | lower }}.yml"
-        - "{{ ansible_os_family | lower }}{{ ansible_distribution_major_version | lower }}-like.yml"
-        #- "{{ ansible_os_family | lower }}-like.yml"
+        - "{{ ansible_os_family | lower }}{{ ansible_distribution_major_version }}-like.yml"
+        - "{{ ansible_os_family | lower }}-like.yml"
         - other.yml
       paths:
         - vars
 
+- name: Loaded variables for each nodes
+  ansible.builtin.debug:
+    var: podman_included_vars
+    verbosity: 1
+
 - name: Packages installation
-  import_tasks: packages.yml
+  ansible.builtin.import_tasks: packages.yml
 
 - name: Global configuration
-  import_tasks: config.yml
+  ansible.builtin.import_tasks: config.yml
+
+- name: Rootless mode
+  ansible.builtin.import_tasks: rootless.yml
 
 - name: Mimic Docker
   when: podman_mimic_docker
-  import_tasks: mimic_docker.yml
-
-- name: Rootless mode
-  import_tasks: rootless.yml
+  ansible.builtin.import_tasks: mimic_docker.yml

@@ -6,6 +6,13 @@
     value: "{{ podman_max_user_namespaces }}"
   when: podman_max_user_namespaces is defined
 
+- name: Users
+  become: true
+  ansible.builtin.user:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ podman_users }}"
+
 - name: Subuid and Subgid files
   become: true
   ansible.builtin.template:
@@ -15,4 +22,8 @@
   with_items:
     - /etc/subuid
     - /etc/subgid
-  register: _podman_subids
+
+# reset_connection task does not support when conditional,
+# it cannot be handled anymore
+- name: Reset connection to take effect of subids changes
+  ansible.builtin.meta: reset_connection

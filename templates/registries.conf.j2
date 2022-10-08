@@ -1,25 +1,52 @@
-unqualified-search-registries = {{ podman_registries_config['unqualified-search-registries'] | list }}
-{% if podman_registries_config['short-name-mode'] is defined %}
-short-name-mode = "{{ podman_registries_config['short-name-mode'] }}"
-{% endif %}
+# {{ ansible_managed }}
+{% if podman_registries_defaults is defined -%}
+    {%- set defaults = podman_registries_defaults -%}
+{%- else -%}
+    {%- set defaults = {} -%}
+{%- endif -%}
 
-{% if podman_registries_config['registry'] | length %}
-{% for registry in podman_registries_config['registry'] %}
+{%- if podman_registries_config is defined -%}
+    {%- set config = podman_registries_config -%}
+{%- else -%}
+    {%- set config = {} -%}
+{%- endif -%}
+
+{%- set data = defaults | combine(config) %}
+
+{% for key, value in data.items() %}
+{% if value is string %}
+{{ key }} = "{{ value }}"
+{% elif value is boolean %}
+{{ key }} = {{ value | lower }}
+{% elif key != "registry" %}
+{{ key }} = {{ value }}
+{% endif %}
+{% endfor %}
+
+{% if data.registry is defined and data.registry | length %}
+{% for registry in data.registry %}
 [[registry]]
-prefix = "{{ registry.prefix }}"
-insecure = {{ registry.insecure | bool }}
-blocked = {{ registry.blocked | bool }}
-
-{% if registry.location is defined %}
-location = "{{ registry.location }}"
+{% for key, value in registry.items() %}
+{% if value is string %}
+{{ key }} = "{{ value }}"
+{% elif value is boolean %}
+{{ key }} = {{ value | lower }}
+{% elif key != "mirror" %}
+{{ key }} = {{ value }}
 {% endif %}
-
-
-{% if registry.mirror is list %}
+{% endfor %}
+{% if registry.mirror is defined and registry.mirror|length > 0 %}
 {% for mirror in registry.mirror %}
 [[registry.mirror]]
-location = "{{ mirror.location }}"
-insecure = {{ mirror.insecure | bool }}
+{% for key, value in registry.mirror.items() %}
+{% if value is string %}
+{{ key }} = "{{ value }}"
+{% elif value is boolean %}
+{{ key }} = {{ value | lower }}
+{% else %}
+{{ key }} = {{ value }}
+{% endif %}
+{% endfor %}
 {% endfor %}
 {% endif %}
 {% endfor %}

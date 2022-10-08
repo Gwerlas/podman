@@ -1,0 +1,18 @@
+---
+- name: Verify Docker and DockerHub immitation
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Remove short names
+      become: true
+      ansible.builtin.file:
+        path: /etc/containers/registries.conf.d
+        state: absent
+    - name: Hello world
+      ansible.builtin.command:
+        cmd: docker run hello-world
+      changed_when: false
+      register: docker_run
+      failed_when:
+        - docker_run.rc > 0
+        - "'Hello from Docker!' not in docker_run.stdout"

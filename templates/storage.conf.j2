@@ -1,4 +1,5 @@
-{%- if podman_storage_defaults is defined -%}
+# {{ ansible_managed }}
+{% if podman_storage_defaults is defined -%}
     {%- set defaults = podman_storage_defaults -%} 
 {%- else -%} 
     {%- set defaults = {} -%} 
@@ -10,32 +11,47 @@
     {%- set config = {} -%} 
 {%- endif -%} 
 
-{%- set data = defaults | combine(config) -%} 
+{%- set data = defaults | combine(config) %} 
 
 {% if data.storage is defined %}
-    [storage]
-    {% for key, value in data.storage.items() %}
-        {% if value is string %}
-            {{ key }} = "{{ value }}"
-        {% endif %}
-    {% endfor %} 
+[storage]
+{% for key, value in data.storage.items() %}
+{% if value is string %}
+{{ key }} = "{{ value }}"
+{% elif value is boolean %}
+{{ key }} = {{ value | lower }}
+{% elif key != "options" %}
+{{ key }} = {{ value }}
+{% endif %}
+{% endfor %} 
 
-    {% if data.storage.options is defined %}
-        [storage.options]
-        {% if data.storage.options.additionalimagestores.items() is defined %}
-            additionalimagestores = {{ data.storage.options.additionalimagestores | list }}
-        {% endif %}
-        {% for key, value in data.storage.options.items() %}
-            {% if key != "additionalimagestores" %}
-                {{ key }} = "{{ value }}"
-            {% endif %}
-        {% endfor %}
+{% if data.storage.options is defined %}
+[storage.options]
+{% for key, value in data.storage.options.items() %}
+{% if value is string %}
+{{ key }} = "{{ value }}"
+{% elif value is boolean %}
+{{ key }} = {{ value | lower }}
+{% elif key not in sections %}
+{{ key }} = {{ value }}
+{% endif %}
+{% endfor %}
 
-        {% if data.storage.options.thinpool is defined %}
-            [storage.options.thinpool]
-            {% for key, value in data.storage.options.thinpool.items() %}
-                {{ key }} = "{{ value }}"
-            {% endfor %} 
-        {% endif %} 
-    {% endif %} 
+{%- set sections = ['aufs', 'btrfs', 'thinpool', 'overlay', 'vfs', 'zfs'] -%}
+{% for section in sections %}
+{% if data.storage.options[section] is defined %}
+[storage.options.{{ section }}]
+{% for key, value in data.storage.options[section].items() %}
+{% if value is string %}
+{{ key }} = "{{ value }}"
+{% elif value is boolean %}
+{{ key }} = {{ value | lower }}
+{% else %}
+{{ key }} = {{ value }}
+{% endif %}
+{% endfor %} 
+
 {% endif %} 
+{% endfor %}
+{% endif %} 
+{% endif %}

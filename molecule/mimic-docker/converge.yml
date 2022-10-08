@@ -1,0 +1,10 @@
+---
+- name: Mimic Docker and DockerHub
+  hosts: all
+  roles:
+    - name: gwerlas.podman
+      vars:
+        podman_mimic_docker: true
+        podman_registries_config:
+          unqualified-search-registries:
+            - docker.io

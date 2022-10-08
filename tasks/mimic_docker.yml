@@ -32,17 +32,19 @@
       become: "{{ item != ansible_user_id }}"
       become_user: "{{ item }}"
       ansible.builtin.systemd:
+        scope: user
         name: podman
-        state: started
         enabled: true
       with_items: "{{ podman_users }}"
     
     - name: Docker environment variables
       become: true
       ansible.builtin.lineinfile:
-        path: /etc/environment
+        path: /etc/profile.d/podman.sh
+        create: true
         line: "{{ item }}"
         regex: "^{{ item.split('=')[0] }}="
+        mode: 0644
       with_items:
-        - DOCKER_BUILDKIT=0
-        - DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock
+        - export DOCKER_BUILDKIT=0
+        - export DOCKER_HOST='unix://$XDG_RUNTIME_DIR/podman/podman.sock'
