@@ -1,7 +1,7 @@
 ---
 - name: Max user namespaces
   become: true
-  ansible.builtin.sysctl:
+  ansible.posix.sysctl:
     name: user.max_user_namespaces
     value: "{{ podman_max_user_namespaces }}"
   when: podman_max_user_namespaces is defined

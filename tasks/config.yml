@@ -32,3 +32,12 @@
     src: storage.conf.j2
     dest: /etc/containers/storage.conf
     mode: 0644
+
+- name: Libpod configuration
+  when:
+    - podman_libpod_defaults is defined or podman_libpod_config is defined
+  become: true
+  ansible.builtin.template:
+    src: libpod.conf.j2
+    dest: /etc/containers/libpod.conf
+    mode: 0644

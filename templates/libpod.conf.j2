@@ -1,0 +1,24 @@
+# {{ ansible_managed }}
+{% if podman_libpod_defaults is defined -%}
+    {%- set defaults = podman_libpod_defaults -%}
+{%- else -%}
+    {%- set defaults = {} -%}
+{%- endif -%}
+
+{%- if podman_libpod_config is defined -%}
+    {%- set config = podman_libpod_config -%}
+{%- else -%}
+    {%- set config = {} -%}
+{%- endif -%}
+
+{%- set data = defaults | combine(config) %}
+
+{% for key, value in data.items() %}
+{% if value is string %}
+{{ key }} = "{{ value }}"
+{% elif value is boolean %}
+{{ key }} = {{ value | lower }}
+{% else %}
+{{ key }} = {{ value }}
+{% endif %}
+{% endfor %}

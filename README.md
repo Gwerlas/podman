@@ -37,10 +37,6 @@ Role Variables
 Available variables are listed below, along with default values (see `defaults/main.yml`):
 
 ```yaml
-# podman_containers_config: {}
-# podman_registries_config: {}
-# podman_storage_config: {}
-
 podman_compose_install: false
 podman_toolbox_install: false
 
@@ -144,6 +140,27 @@ driver = "zfs"
 [storage.options.zfs]
 mountopt = "nodev"
 ```
+#### Libpod
+
+Use the `podman_libpod_config` dictionary to populate the `/etc/containers/libpod.conf`
+file following the same structure as the toml described in [`libpod.conf`][] man page.
+
+[`libpod.conf`]: https://manpages.debian.org/unstable/podman/libpod.conf.5.en.html
+
+For example :
+
+```yaml
+podman_libpod_config:
+  cgroup_manager: cgroupfs
+```
+
+Will generate the `/etc/containers/libpod.conf` bellow :
+
+```ini
+cgroup_manager = "cgroupfs"
+```
+
+For Debian 11 only, we overwrite the distribution defaults by the configuration above.
 
 ### Podman compose
 

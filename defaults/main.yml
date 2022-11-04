@@ -1,8 +1,4 @@
 ---
-# podman_containers_config: {}
-# podman_registries_config: {}
-# podman_storage_config: {}
-
 podman_compose_install: false
 podman_toolbox_install: false
 

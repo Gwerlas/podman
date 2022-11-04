@@ -46,14 +46,18 @@ platforms:
   #   cpus: 4
   #   memory: 8192
   #   provider_raw_config_args: *raw_config
-  - name: ubuntu-21.10
+  - name: ubuntu2110
     box: generic/ubuntu2110
     memory: 2048
     provider_raw_config_args: *raw_config
-  - name: ubuntu-22.04
+  - name: ubuntu2204
     box: generic/ubuntu2204
     memory: 4096
     provider_raw_config_args: *raw_config
+  # - name: ubuntu2210
+  #   box: generic/ubuntu2210
+  #   memory: 4096
+  #   provider_raw_config_args: *raw_config
 provisioner:
   name: ansible
 verifier:

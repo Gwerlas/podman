@@ -29,6 +29,7 @@ galaxy_info:
       versions:
         - impish
         - jammy
+        - kinetic
 
   galaxy_tags:
     - podman
