@@ -1,3 +1,10 @@
 ansible-lint:
   image: gwerlas/ansible-lint
   script: ansible-lint
+
+import:
+  stage: deploy
+  image: gwerlas/ansible
+  script: ansible-galaxy role import --token $GALAXY_TOKEN Gwerlas podman
+  rules:
+    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
