@@ -1,0 +1,9 @@
+---
+packages:
+  podman:
+    - app-containers/buildah
+    - app-containers/podman
+
+default_registries_config:
+  unqualified-search-registries:
+    - docker.io

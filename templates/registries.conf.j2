@@ -1,6 +1,6 @@
 # {{ ansible_managed }}
-{% if podman_registries_defaults is defined -%}
-    {%- set defaults = podman_registries_defaults -%}
+{% if default_registries_config is defined -%}
+    {%- set defaults = default_registries_config -%}
 {%- else -%}
     {%- set defaults = {} -%}
 {%- endif -%}

@@ -2,6 +2,7 @@
 packages:
   compose:
     - podman-compose
+    - podman-dnsname
   docker:
     - podman-docker
   podman:
@@ -9,5 +10,3 @@ packages:
     - slirp4netns
     - fuse-overlayfs
     - podman
-  toolbox:
-    - podman-toolbox

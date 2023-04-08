@@ -1,0 +1,15 @@
+---
+- name: Check for conflict with Docker Engine
+  when: podman_mimic_docker
+  block:
+    - name: Run docker --version
+      ansible.builtin.command:
+        cmd: docker --version
+      register: result
+      changed_when: false
+      failed_when: false
+
+    - name: Skip due to Docker presence
+      when: result.stdout is match "Docker"
+      ansible.builtin.fail:
+        msg: Docker is installed

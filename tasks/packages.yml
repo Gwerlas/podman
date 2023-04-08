@@ -1,30 +1,25 @@
 ---
-- name: Podman packages
+- name: Packages - Load variables
+  when: podman_packages_computed is undefined
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/facts.yml"
+
+- name: Packages
   become: true
   ansible.builtin.package:
-    name: "{{ podman_packages }}"
-    
-- name: Podman compose packages
-  ansible.builtin.package:
-    name: "{{ podman_compose_packages }}"
-  when:
-    - podman_compose_install
-    - podman_compose_packages | length
-    
-- name: Podman toolbox packages
-  ansible.builtin.package:
-    name: "{{ podman_toolbox_packages }}"
-  when:
-    - podman_toolbox_install
-    - podman_toolbox_packages | length
+    name: "{{ podman_packages_computed }}"
+  notify: Migrate podman ressources
+  register: result
 
-# Register the podman version for specifics behaviours
-- name: Get the version of podman
-  ansible.builtin.command:
-    cmd: podman --version
-  changed_when: false
-  register: _podman_version
+- name: Packages - Update facts   # noqa no-handler
+  when: result.changed
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/facts.yml"
 
-- name: Register the current version number
-  ansible.builtin.set_fact:
-    podman_current_version: "{{ _podman_version.stdout.split(' ')[2] }}"
+- name: Packages - Symlink docker to podman
+  when:
+    - podman_mimic_docker
+    - not 'docker' in packages
+  become: true
+  ansible.builtin.file:
+    src: /usr/bin/podman
+    dest: /usr/bin/docker
+    state: link

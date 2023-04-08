@@ -1,0 +1,19 @@
+---
+packages:
+  compose:
+    - podman-compose
+  docker:
+    - podman-docker
+  podman:
+    - podman
+  toolbox:
+    - toolbox
+
+packages_computed: |
+  {{
+    packages.podman +
+    ((podman_compose_install and 'compose' in packages) | ternary(packages.compose, [])) +
+    ((podman_mimic_docker and 'docker' in packages) | ternary(packages.docker, [])) +
+    ((podman_toolbox_install and 'toolbox' in packages) | ternary(packages.toolbox, [])) |
+    flatten
+  }}

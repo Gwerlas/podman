@@ -1,0 +1,30 @@
+---
+- name: Facts - Local variables
+  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ vars_file }}"
+        - empty.yml
+      paths:
+        - "{{ role_path }}/vars"
+  loop:
+    - "{{ ansible_os_family | lower }}-like.yml"                                          # debian-like,  redhat-like, etc.
+    - "{{ ansible_os_family | lower }}{{ ansible_distribution_major_version }}-like.yml"  # redhat7-like
+    - "{{ ansible_distribution | lower }}{{ ansible_distribution_major_version }}.yml"    # debian11
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_release | lower }}.yml" # ubuntu-jammy
+  loop_control:
+    loop_var: vars_file
+
+- name: Get the version of podman
+  ansible.builtin.command:
+    cmd: podman --version
+  changed_when: false
+  failed_when: false
+  register: result
+
+- name: Facts - Global
+  ansible.builtin.set_fact:
+    cacheable: true
+    podman_current_version: "{{ (result.rc == 0) | ternary(result.stdout.split(' ')[2], None) }}"
+    podman_packages_computed: "{{ packages_computed }}"

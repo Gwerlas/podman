@@ -1,29 +1,23 @@
 ---
-- name: Max user namespaces
+- name: Rootless mode
   become: true
-  ansible.posix.sysctl:
-    name: user.max_user_namespaces
-    value: "{{ podman_max_user_namespaces }}"
-  when: podman_max_user_namespaces is defined
+  block:
+    - name: Rootless - Users
+      ansible.builtin.user:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ podman_users }}"
 
-- name: Users
-  become: true
-  ansible.builtin.user:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ podman_users }}"
+    - name: Rootless - Subuid and Subgid files
+      ansible.builtin.template:
+        src: subid.j2
+        dest: "{{ item }}"
+        mode: 0644
+      loop:
+        - /etc/subuid
+        - /etc/subgid
+      notify:
+        - Migrate podman ressources
 
-- name: Subuid and Subgid files
-  become: true
-  ansible.builtin.template:
-    src: subid.j2
-    dest: "{{ item }}"
-    mode: 0644
-  with_items:
-    - /etc/subuid
-    - /etc/subgid
-
-# reset_connection task does not support when conditional,
-# it cannot be handled anymore
-- name: Reset connection to take effect of subids changes
+- name: Rootless - Reset connection to take effect of subids changes
   ansible.builtin.meta: reset_connection

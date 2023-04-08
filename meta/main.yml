@@ -7,7 +7,7 @@ galaxy_info:
 
   license: BSD-3-Clause
 
-  min_ansible_version: "2.9"
+  min_ansible_version: "2.10"
 
   platforms:
     - name: ArchLinux
@@ -27,9 +27,7 @@ galaxy_info:
         - all
     - name: Ubuntu
       versions:
-        - impish
         - jammy
-        - kinetic
 
   galaxy_tags:
     - podman

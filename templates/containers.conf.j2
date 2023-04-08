@@ -1,6 +1,6 @@
 # {{ ansible_managed }}
-{% if podman_containers_defaults is defined -%}
-    {%- set defaults = podman_containers_defaults -%}
+{% if default_containers_config is defined -%}
+    {%- set defaults = default_containers_config -%}
 {%- else -%}
     {%- set defaults = {} -%}
 {%- endif -%}

@@ -2,4 +2,4 @@
 - name: Converge
   hosts: all
   roles:
-    - name: gwerlas.podman
+    - role: gwerlas.podman

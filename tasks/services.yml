@@ -1,0 +1,32 @@
+---
+- name: Services
+  when: podman_mimic_docker
+  block:
+    - name: Services - Be sure to have the right podman current version
+      ansible.builtin.import_tasks: "{{ role_path }}/tasks/facts.yml"
+
+    - name: Services - Systemd sockets
+      when:
+        - ansible_service_mgr == "systemd"
+        - podman_current_version is version('3.0', '>=')
+      block:
+        - name: Podman socket
+          become: "{{ item != ansible_user_id }}"
+          become_user: "{{ item }}"
+          ansible.builtin.systemd:
+            scope: user
+            name: podman.socket
+            enabled: true
+          loop: "{{ podman_users }}"
+        
+        - name: Docker environment variables
+          become: true
+          ansible.builtin.lineinfile:
+            path: /etc/profile.d/podman.sh
+            create: true
+            line: "{{ item }}"
+            regex: "^{{ item.split('=')[0] }}="
+            mode: "0644"
+          loop:
+            - export DOCKER_BUILDKIT=0
+            - export DOCKER_HOST='unix://$XDG_RUNTIME_DIR/podman/podman.sock'

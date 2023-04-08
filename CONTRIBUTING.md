@@ -20,8 +20,8 @@ packages does not work out of the box.
 
 Use the files in the `vars` directory to do it. You can use the dictionaries below :
 
-- `podman_containers_defaults`
-- `podman_registries_defaults`
+- `default_containers_config`
+- `default_registries_config`
 - `podman_storage_defaults`
 
 The users `podman_*_config` will be merged with the respective `podman_*_defaults`.

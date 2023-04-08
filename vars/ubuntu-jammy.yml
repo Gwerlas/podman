@@ -1,7 +1,5 @@
 ---
 packages:
-  compose:
-    - podman-compose
   docker:
     - podman-docker
   podman:
