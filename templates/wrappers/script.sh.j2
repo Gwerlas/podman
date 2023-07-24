@@ -1,0 +1,83 @@
+# {{ ansible_managed }}
+
+{% set data = podman_wrappers_values | combine(wrapper)%}
+{% set wrapper = data %}
+{% if not wrapper.can_extends | default(false) %}
+# Reset options to prevent user's customizations
+CONTAINER_OPTS=""
+{% endif %}
+
+# Podman options
+# https://docs.ansible.com/ansible/latest/collections/containers/podman/podman_container_module.html
+{% for key in podman_wrappers_autofill %}
+{% if key in wrapper %}
+{% set parameter = key | replace('_', '-') %}
+{% set value = wrapper[key] %}
+{% if value is mapping %}
+{% for k, v in value.items() %}
+CONTAINER_OPTS="$CONTAINER_OPTS --{{ parameter }} {{ k }}={{ v }}"
+{% endfor %}
+{% elif value is iterable and not value is string %}
+{% for i in value %}
+CONTAINER_OPTS="$CONTAINER_OPTS --{{ parameter }} {{ i }}"
+{% endfor %}
+{% elif value is boolean %}
+{% if value %}
+CONTAINER_OPTS="$CONTAINER_OPTS --{{ parameter }}"
+{% endif %}
+{% else %}
+CONTAINER_OPTS="$CONTAINER_OPTS --{{ parameter }} {{ value }}"
+{% endif %}
+{% endif %}
+{% endfor %}
+
+{% if 'wrapper_extras' in wrapper %}
+# Wrapper's extras snippets
+{% if wrapper.wrapper_extras.ssh_auth_sock | default(false) %}
+# SSH client authentication socket
+if [ ! -z "$SSH_AUTH_SOCK" ]; then
+  CONTAINER_OPTS="$CONTAINER_OPTS -e SSH_AUTH_SOCK -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK -v $HOME/.ssh:/root/.ssh"
+fi
+{% endif %}
+
+{% if wrapper.wrapper_extras.podman_socket | default(false) %}
+# Podman socket
+systemctl is-active --user podman.socket > /dev/null ||
+systemctl start --user podman.socket
+
+CONTAINER_OPTS="$CONTAINER_OPTS --privileged -v $XDG_RUNTIME_DIR/podman/podman.sock:/run/docker.sock -v /sys/fs/cgroup:/sys/fs/cgroup"
+{% endif %}
+
+{% if 'env_patterns' in wrapper.wrapper_extras %}
+# Sharing environment variables by patterns
+{% for pattern in wrapper.wrapper_extras.env_patterns | default([]) %}
+for envvar in $(env | grep '^{{ pattern }}=' | cut -d= -f1); do
+  CONTAINER_OPTS="$CONTAINER_OPTS -e $envvar"
+done
+{% endfor%}
+{% endif %}
+
+{% if wrapper.wrapper_extras.openstack_cli | default(false) %}
+# Openstack clients
+for envvar in $(env | grep '^OS_' | cut -d= -f1); do
+  CONTAINER_OPTS="$CONTAINER_OPTS -e $envvar"
+done
+
+for path in .config/openstack .neutronclient .novaclient; do
+  install -d $HOME/$path
+  CONTAINER_OPTS="$CONTAINER_OPTS -v $HOME/$path:/root/$path"
+done
+
+if [ ! -z "${OS_CACERT:-}" ]; then
+  CONTAINER_OPTS="$CONTAINER_OPTS -v $OS_CACERT:$OS_CACERT:ro"
+fi
+{% endif %}
+
+{% if wrapper.wrapper_extras.same_pwd | default(false) %}
+# Same working directory as the user
+CONTAINER_OPTS="$CONTAINER_OPTS -e PWD -v $PWD:$PWD -w $PWD"
+{% endif %}
+{% endif %}
+
+# Run
+{{ wrapper.executable | default('podman') }} run $CONTAINER_OPTS {{ wrapper.image }} {{ wrapper.command | default('') }} "$@"

@@ -16,3 +16,9 @@
 
 - name: Services
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/services.yml"
+
+- name: Wrappers
+  when: podman_wrappers | length > 0
+  tags:
+    - wrappers
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/wrappers.yml"

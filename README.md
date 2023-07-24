@@ -44,6 +44,9 @@ podman_mimic_docker: false
 
 podman_users:
   - "{{ ansible_user_id }}"
+
+podman_wrappers: []
+podman_wrappers_path: /usr/local/bin
 ```
 
 ### Podman configuration
@@ -189,6 +192,44 @@ If the installed version of Podman is `3.0` or upper, the service will be enable
 respectively set to `0` and `$XDG_RUNTIME_DIR/podman/podman.sock`.
 
 So you will be able to run Docker in Podman.
+
+### Wrappers
+
+You can add some wrappers to call some commands transparently :
+
+For example, run molecule without installing it (and its dependencies) on
+your system :
+
+```sh
+podman_wrappers:
+  - command: molecule
+    image: gwerlas/molecule
+    env:
+      MOLECULE_CONTAINERS_BACKEND: podman
+    network: host
+    security_opt: label=disable
+    volume:
+      - $HOME/.ansible:/root/.ansible
+      - $HOME/.cache/molecule:/root/.cache/molecule
+    wrapper_extras:
+      env_patterns:
+        - ANSIBLE_*
+        - MOLECULE_*
+      openstack_cli: true
+      podman_socket: true
+      same_pwd: true
+      ssh_auth_sock: true
+```
+
+Most of arguments are the same as `podman run` parameters, we support almost
+all of the [ansible podman_container module][] arguments as is
+(except of aliases and services oriented features).
+
+[ansible podman_container module]: https://docs.ansible.com/ansible/latest/collections/containers/podman/podman_container_module.html
+
+You can add (or remove) the supported parameters list editing the
+`podman_wrappers_autofill` variable. You also can editing the default values
+editing the `podman_wrappers_values` variable.
 
 Dependencies
 ------------

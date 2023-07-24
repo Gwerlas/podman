@@ -6,3 +6,96 @@ podman_mimic_docker: false
 
 podman_users:
   - "{{ ansible_user_id }}"
+
+# Wrappers
+podman_wrappers: []
+podman_wrappers_path: /usr/local/bin
+
+podman_wrappers_values:
+  pull: newer
+  rm: true
+  tty: true
+
+podman_wrappers_autofill:
+  - annotation
+  - authfile
+  - blkio_weight
+  - blkio_weight_device
+  - cap_add
+  - cap_drop
+  - cgroup_parent
+  - cgroupns
+  - cgroups
+  - cidfile
+  - conmon_pidfile
+  - cpu_period
+  - cpu_rt_period
+  - cpu_rt_runtime
+  - cpu_shares
+  - cpus
+  - cpuset_cpus
+  - cpuset_mems
+  - device
+  - device_read_bps
+  - device_read_iops
+  - device_write_bps
+  - device_write_iops
+  - dns
+  - dns_option
+  - dns_search
+  - entrypoint
+  - env
+  - env_file
+  - env_host
+  - expose
+  - gidmap
+  - group_add
+  - hostname
+  - image_volume
+  - init
+  - init_path
+  - interactive
+  - ip
+  - ipc
+  - label
+  - label_file
+  - mac_address
+  - memory
+  - memory_reservation
+  - memory_swap
+  - memory_swappiness
+  - mount
+  - network
+  - no_hosts
+  - oom_kill_disable
+  - oom_score_adj
+  - pid
+  - pids_limit
+  - pod
+  - privileged
+  - publish
+  - publish_all
+  - pull
+  - read_only
+  - read_only_tmpfs
+  - requires
+  - rm
+  - rootfs
+  - sdnotify
+  - secrets
+  - security_opt
+  - shm_size
+  - sig_proxy
+  - subgidname
+  - subuidname
+  - sysctl
+  - systemd
+  - timezone
+  - tty
+  - uidmap
+  - user
+  - userns
+  - uts
+  - volume
+  - volume_from
+  - workdir

@@ -1,0 +1,21 @@
+---
+- name: Wrapper's path
+  ansible.builtin.file:
+    path: "{{ podman_wrappers_path }}"
+    state: directory
+    mode: "0755"
+
+- name: Wrapper's path informations
+  ansible.builtin.stat:
+    path: "{{ podman_wrappers_path }}"
+  register: result
+
+- name: Wrappers
+  become: "{{ not result.stat.writeable }}"
+  ansible.builtin.template:
+    src: "{{ wrapper.template | default('wrappers/script.sh.j2') }}"
+    dest: "{{ podman_wrappers_path }}/{{ wrapper.command | default(wrapper.name) }}"
+    mode: "0755"
+  loop: "{{ podman_wrappers }}"
+  loop_control:
+    loop_var: wrapper
