@@ -1,5 +1,5 @@
 ---
-- name: Check for conflict with Docker Engine
+- name: Pre-checks - Conflict with Docker Engine
   when: podman_mimic_docker
   block:
     - name: Run docker --version
@@ -13,3 +13,17 @@
       when: result.stdout is match "Docker"
       ansible.builtin.fail:
         msg: Docker is installed
+
+- name: Pre-checks - Portage use flags
+  when: ansible_pkg_mgr == 'portage'
+  become: true
+  ansible.builtin.template:
+    src: portage.use.j2
+    dest: /etc/portage/package.use/podman
+    mode: "0644"
+
+- name: Pre-checks - Kernel modules
+  become: true
+  community.general.modprobe:
+    name: ip_tables
+    persistent: present

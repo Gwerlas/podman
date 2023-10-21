@@ -45,7 +45,9 @@ fi
 systemctl is-active --user podman.socket > /dev/null ||
 systemctl start --user podman.socket
 
-CONTAINER_OPTS="$CONTAINER_OPTS --privileged -v $XDG_RUNTIME_DIR/podman/podman.sock:/run/docker.sock -v /sys/fs/cgroup:/sys/fs/cgroup"
+CONTAINER_OPTS="$CONTAINER_OPTS --privileged"
+CONTAINER_OPTS="$CONTAINER_OPTS -v /sys/fs/cgroup:/sys/fs/cgroup"
+CONTAINER_OPTS="$CONTAINER_OPTS -v $XDG_RUNTIME_DIR/podman/podman.sock:/run/docker.sock"
 {% endif %}
 
 {% if 'env_patterns' in wrapper.wrapper_extras %}
