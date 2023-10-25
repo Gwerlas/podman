@@ -9,6 +9,8 @@
     name: "{{ podman_packages_computed }}"
   notify: Migrate podman ressources
   register: result
+  until: result.failed == false
+  retries: "{{ podman_retries }}"
 
 - name: Packages - Update facts   # noqa no-handler
   when: result.changed

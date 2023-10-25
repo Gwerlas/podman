@@ -7,6 +7,8 @@ podman_mimic_docker: false
 podman_users:
   - "{{ ansible_user_id }}"
 
+podman_retries: "{{ system_retries | default(2) }}"
+
 # Wrappers
 podman_wrappers: []
 podman_wrappers_path: /usr/local/bin

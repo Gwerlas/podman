@@ -4,5 +4,6 @@
   gather_facts: false
   tasks:
     - name: Hello world
-      containers.podman.podman_image:
-        name: hello-world
+      ansible.builtin.command:
+        cmd: podman run hello-world
+      changed_when: false

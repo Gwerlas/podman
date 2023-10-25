@@ -200,17 +200,22 @@ You can add some wrappers to call some commands transparently :
 For example, run molecule without installing it (and its dependencies) on
 your system :
 
-```sh
+```yaml
 podman_wrappers:
   - command: molecule
     image: gwerlas/molecule
     env:
+      CONTAINER_CONNECTION: docker
       MOLECULE_CONTAINERS_BACKEND: podman
+    interactive: true
     network: host
     security_opt: label=disable
     volume:
-      - $HOME/.ansible:/root/.ansible
       - $HOME/.cache/molecule:/root/.cache/molecule
+      - $HOME/.vagrant.d:/root/.vagrant.d
+      - /run/libvirt:/run/libvirt
+      - /var/lib/libvirt:/var/lib/libvirt
+      - /var/tmp:/var/tmp
     wrapper_extras:
       env_patterns:
         - ANSIBLE_*

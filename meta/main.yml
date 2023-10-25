@@ -28,6 +28,8 @@ galaxy_info:
     - name: Ubuntu
       versions:
         - jammy
+        - kinetic
+        - lunar
 
   galaxy_tags:
     - podman
