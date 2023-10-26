@@ -21,3 +21,6 @@
 
 - name: Rootless - Reset connection to take effect of subids changes
   ansible.builtin.meta: reset_connection
+
+- name: Rootless - Migrate podman system to take effect of subids changes
+  ansible.builtin.meta: flush_handlers
