@@ -1,8 +1,0 @@
----
-- name: Migrate podman ressources
-  become: true
-  become_user: "{{ item }}"
-  ansible.builtin.command:
-    cmd: podman system migrate
-  changed_when: true
-  loop: "{{ podman_users }}"

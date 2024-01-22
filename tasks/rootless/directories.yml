@@ -1,0 +1,13 @@
+---
+- name: Rootless - User home directory
+  become: true
+  vars:
+    default_home: "{{ user.home | default('/home/' + user.name) }}"
+  ansible.builtin.file:
+    path: "{{ getent_passwd[user.name].4 | default(default_home) }}"
+    state: directory
+    owner: "{{ user.uid | default(user.name) }}"
+    mode: u+rwx
+  loop: "{{ podman_users }}"
+  loop_control:
+    loop_var: user

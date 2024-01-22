@@ -42,12 +42,57 @@ podman_toolbox_install: false
 
 podman_mimic_docker: false
 
+podman_create_missing_users: true
 podman_users:
-  - "{{ ansible_user_id }}"
+  - name: "{{ ansible_user_id }}"
 
 podman_wrappers: []
 podman_wrappers_path: /usr/local/bin
 ```
+
+### Podman rootless
+
+To let some users using Podman in rootless mode, the `podman_users` have to be
+a list of objects formed like this :
+
+```yaml
+podman_users:
+  - name: jdoe            # Unix login name (required)
+    home: /home/jdoe      # Got from user entries if missing
+    uid: 1000             # Used only for users not yet created system wide
+    subuid_starts: 100000 # Generated from the user id by default
+    subuid_length: 50000  # 65536 by default
+    subgid_starts: 100000 # Same as subuid_starts by default
+    subgid_length: 50000  # Same as subuid_length by default
+```
+
+Because podman store its data in the user's home directory, we will
+create it if missing.
+
+You can add users quickly calling the `rootless` task alone :
+
+```yaml
+---
+- name: Add a user for podman rootless usage
+  hosts: all
+  vars:
+    podman_users:
+      - name: jdoe
+        uid: 300
+  tasks:
+    - name: Add John Doe
+      ansible.builtin.import_role:
+        name: gwerlas.podman
+        tasks_from: rootless
+```
+
+#### Unexisting users
+
+For users that doesn't yet exist, we will create them for You through the
+`gwerlas.system` role.
+
+To disable missing user creation, set `podman_create_missing_users` to `false`.
+In this case, You have to set the `uid` property for each missing users.
 
 ### Podman configuration
 
@@ -239,7 +284,10 @@ editing the `podman_wrappers_values` variable.
 Dependencies
 ------------
 
-None.
+The `gwerlas.system` role for user management.
+
+Be sure to have the `containers.podman` installad on your system, or present
+in your `requirements.yml`.
 
 Example Playbook
 ----------------
@@ -255,9 +303,6 @@ An exemple of the way to be the more compatible with Docker as You can :
     - name: gwerlas.podman
       vars:
         podman_mimic_docker: true
-        podman_registries_config:
-          unqualified-search-registries:
-            - docker.io
 ```
 
 Facts
@@ -269,9 +314,5 @@ some checks, and to adapt the code for the target node.
 License
 -------
 
-BSD
+[BSD 3-Clause License](LICENSE).
 
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
