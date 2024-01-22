@@ -4,8 +4,9 @@ podman_toolbox_install: false
 
 podman_mimic_docker: false
 
+podman_create_missing_users: true
 podman_users:
-  - "{{ ansible_user_id }}"
+  - name: "{{ ansible_user_id }}"
 
 podman_retries: "{{ system_retries | default(2) }}"
 

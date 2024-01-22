@@ -1,23 +1,18 @@
 ---
-- name: Rootless mode
-  become: true
-  block:
-    - name: Rootless - Users
-      ansible.builtin.user:
-        name: "{{ item }}"
-        state: present
-      loop: "{{ podman_users }}"
+- name: Rootless - Users
+  when: podman_create_missing_users
+  vars:
+    system_users: "{{ podman_users }}"
+  ansible.builtin.import_role:
+    name: gwerlas.system
+    tasks_from: users
 
-    - name: Rootless - Subuid and Subgid files
-      ansible.builtin.template:
-        src: subid.j2
-        dest: "{{ item }}"
-        mode: 0644
-      loop:
-        - /etc/subuid
-        - /etc/subgid
-      notify:
-        - Migrate podman ressources
+- name: Rootless - Get user entries
+  ansible.builtin.getent:
+    database: passwd
 
-- name: Rootless - Reset connection to take effect of subids changes
-  ansible.builtin.meta: reset_connection
+- name: Rootless - Containers directories
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/rootless/directories.yml"
+
+- name: Rootless - Subuid and Subgid files
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/rootless/subids.yml"

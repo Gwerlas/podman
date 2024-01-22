@@ -1,0 +1,11 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    podman_users:
+      - name: myapp
+      - name: futur
+        home: /srv/futur
+        uid: 300
+  roles:
+    - gwerlas.podman

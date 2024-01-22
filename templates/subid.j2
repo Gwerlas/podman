@@ -1,7 +1,0 @@
-# {{ ansible_managed }}
-{% set start = 100000 %}
-{% set gap = 65536 %}
-{% for user in podman_users %}
-{{ user }}:{{ start }}:{{ gap }}
-{% set start = start + gap - 1 %}
-{% endfor %}

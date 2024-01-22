@@ -1,17 +1,22 @@
 # {{ ansible_managed }}
-{% if default_registries_config is defined -%}
-    {%- set defaults = default_registries_config -%}
-{%- else -%}
-    {%- set defaults = {} -%}
-{%- endif -%}
+{%
+    set defaults = (
+        (
+            default_registries_config |
+            default({})
+        ) |
+        combine(
+                {'unqualified-search-registries': ['docker.io']}
+                if podman_mimic_docker
+                else {}
+            ,
+            recursive=true
+        )
+    )
+%}
+{% set config = podman_registries_config | default({}) %}
 
-{%- if podman_registries_config is defined -%}
-    {%- set config = podman_registries_config -%}
-{%- else -%}
-    {%- set config = {} -%}
-{%- endif -%}
-
-{%- set data = defaults | combine(config) %}
+{%- set data = defaults | combine(config, recursive=true) %}
 
 {% for key, value in data.items() %}
 {% if value is string %}

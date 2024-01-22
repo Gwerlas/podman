@@ -1,0 +1,42 @@
+---
+- name: Rootless - Subids
+  when:
+    - user.name != 'root'
+    - user.name in getent_passwd or 'subuid_starts' in user
+  become: true
+  vars:
+    uid: "{{ getent_passwd[user.name].1 | default(user.uid) }}"
+    subuid_starts: "{{ user.subuid_starts | default(uid | int | bitwise_shift_left(16)) }}"
+    subuid_length: "{{ user.subuid_length | default(65536) }}"
+  block:
+    - name: Rootless - Set subuids
+      ansible.builtin.lineinfile:
+        path: /etc/subuid
+        regexp: "^{{ user.name }}:"
+        line: "{{ user.name }}:{{ subuid_starts }}:{{ subuid_length }}"
+        create: true
+        mode: 0644
+        owner: root
+        group: root
+      loop: "{{ podman_users }}"
+      loop_control:
+        loop_var: user
+
+    - name: Rootless - Set subgids
+      vars:
+        subgid_starts: "{{ user.subgid_starts | default(subuid_starts) }}"
+        subgid_length: "{{ user.subgid_length | default(subuid_length) }}"
+      ansible.builtin.lineinfile:
+        path: /etc/subgid
+        regexp: "^{{ user.name }}:"
+        line: "{{ user.name }}:{{ subgid_starts }}:{{ subgid_length }}"
+        create: true
+        mode: 0644
+        owner: root
+        group: root
+      loop: "{{ podman_users }}"
+      loop_control:
+        loop_var: user
+
+- name: Rootless - Reset connection to take effect of subids changes
+  ansible.builtin.meta: reset_connection
