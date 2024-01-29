@@ -9,6 +9,7 @@ driver:
 platforms:
   - name: archlinux
     box: archlinux/archlinux
+    memory: 2048
     provider_raw_config_args: &raw_config
       - "cpu_mode = 'host-passthrough'"
       - "disk_bus = 'virtio'"
