@@ -7,7 +7,7 @@
     path: "{{ getent_passwd[user.name].4 | default(default_home) }}"
     state: directory
     owner: "{{ user.uid | default(user.name) }}"
-    mode: u+rwx
+    mode: u+rwx,go+rx
   loop: "{{ podman_users }}"
   loop_control:
     loop_var: user

@@ -1,5 +1,7 @@
 ---
 - name: Prepare
   hosts: all
+  vars:
+    system_manage_time: false
   roles:
-    - gwerlas.system
+    - role: gwerlas.system
