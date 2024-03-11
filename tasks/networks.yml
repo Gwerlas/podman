@@ -1,0 +1,23 @@
+---
+- name: Provision networks
+  become: "{{ 'run_as' in network }}"
+  become_user: "{{ network.run_as | default(omit) }}"
+  containers.podman.podman_network:
+    name: "{{ network.name }}"
+    debug: "{{ network.debug | default(omit) }}"
+    disable_dns: "{{ network.disable_dns | default(omit) }}"
+    driver: "{{ network.driver | default(omit) }}"
+    executable: "{{ network.executable | default(omit) }}"
+    force: "{{ network.force | default(omit) }}"
+    gateway: "{{ network.gateway | default(omit) }}"
+    internal: "{{ network.internal | default(omit) }}"
+    ip_range: "{{ network.ip_range | default(omit) }}"
+    ipv6: "{{ network.ipv6 | default(omit) }}"
+    macvlan: "{{ network.macvlan | default(omit) }}"
+    opt: "{{ network.opt | default(omit) }}"
+    recreate: "{{ network.recreate | default(omit) }}"
+    state: "{{ network.state | default(omit) }}"
+    subnet: "{{ network.subnet | default(omit) }}"
+  loop: "{{ podman_networks }}"
+  loop_control:
+    loop_var: network

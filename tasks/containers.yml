@@ -1,0 +1,243 @@
+---
+- name: Service manager check
+  vars:
+    rootless_containers: |
+      {{
+        (
+          (ansible_user_id == 'root') |
+          ternary(
+            podman_containers | selectattr('run_as', 'defined') | selectattr('run_as', '!=', 'root'),
+            podman_containers | rejectattr('run_as', '==', 'root')
+          )
+        )
+      }}
+    enabled_rootless_containers: |
+      {{
+        (rootless_containers | selectattr('enabled', 'undefined'))
+      + (rootless_containers | selectattr('enabled', 'defined') | selectattr('enabled'))
+      }}
+  when:
+    - enabled_rootless_containers | length > 0
+    - ansible_service_mgr != "systemd"
+  ansible.builtin.fail:
+    msg: |
+      {{ ansible_service_mgr | capitalize }} doesn't support user services.
+      Set 'enabled: false' to your 'podman_containers' entries if You don't
+      care.
+
+      Beware that your services won't automatically start at boot time.
+
+      If You use 'podman_containers' variable to launche runtimes, You may
+      prefer to use 'podman_wrappers' instead.
+
+- name: Get user informations
+  ansible.builtin.getent:
+    database: passwd
+
+- name: Provision containers
+  become: "{{ 'run_as' in container }}"
+  become_user: "{{ container.run_as | default(omit) }}"
+  vars:
+    state: |-
+      {{
+        (container.enabled | default(true)) |
+        ternary(
+          'created',
+          container.state | default('started')
+        )
+      }}
+    uname: "{{ container.run_as | default(ansible_user_id) }}"
+    uid: "{{ ansible_facts.getent_passwd[uname].1 }}"
+    default_systemd_path: |-
+      {{
+        (uid == 0) |
+        ternary(
+          '/etc/systemd/system/',
+          ansible_facts.getent_passwd[uname].4 + '/.config/systemd/user/'
+        )
+      }}
+  containers.podman.podman_container:
+    name: "{{ container.name }}"
+    state: "{{ state }}"
+    add_hosts: "{{ container.add_hosts | default(omit) }}"
+    annotation: "{{ container.annotation | default(omit) }}"
+    authfile: "{{ container.authfile | default(omit) }}"
+    auto_remove: "{{ container.auto_remove | default(omit) }}"
+    blkio_weight: "{{ container.blkio_weight | default(omit) }}"
+    blkio_weight_device: "{{ container.blkio_weight_device | default(omit) }}"
+    cap_add: "{{ container.cap_add | default(omit) }}"
+    cap_drop: "{{ container.cap_drop | default(omit) }}"
+    capabilities: "{{ container.capabilities | default(omit) }}"
+    cgroup_parent: "{{ container.cgroup_parent | default(omit) }}"
+    cgroupns: "{{ container.cgroupns | default(omit) }}"
+    cgroups: "{{ container.cgroups | default(omit) }}"
+    cidfile: "{{ container.cidfile | default(omit) }}"
+    cmd_args: "{{ container.cmd_args | default(omit) }}"
+    command: "{{ container.command | default(omit) }}"
+    conmon_pidfile: "{{ container.conmon_pidfile | default(omit) }}"
+    cpu_period: "{{ container.cpu_period | default(omit) }}"
+    cpu_quota: "{{ container.cpu_quota | default(omit) }}"
+    cpu_rt_period: "{{ container.cpu_rt_period | default(omit) }}"
+    cpu_rt_runtime: "{{ container.cpu_rt_runtime | default(omit) }}"
+    cpu_shares: "{{ container.cpu_shares | default(omit) }}"
+    cpus: "{{ container.cpus | default(omit) }}"
+    cpuset_cpus: "{{ container.cpuset_cpus | default(omit) }}"
+    cpuset_mems: "{{ container.cpuset_mems | default(omit) }}"
+    debug: "{{ container.debug | default(omit) }}"
+    detach: "{{ container.detach | default(omit) }}"
+    detach_keys: "{{ container.detach_keys | default(omit) }}"
+    device: "{{ container.device | default(omit) }}"
+    device_read_bps: "{{ container.device_read_bps | default(omit) }}"
+    device_read_iops: "{{ container.device_read_iops | default(omit) }}"
+    device_write_bps: "{{ container.device_write_bps | default(omit) }}"
+    device_write_iops: "{{ container.device_write_iops | default(omit) }}"
+    dns: "{{ container.dns | default(omit) }}"
+    dns_option: "{{ container.dns_option | default(omit) }}"
+    dns_search: "{{ container.dns_search | default(omit) }}"
+    dns_search_domains: "{{ container.dns_search_domains | default(omit) }}"
+    dns_servers: "{{ container.dns_servers | default(omit) }}"
+    entrypoint: "{{ container.entrypoint | default(omit) }}"
+    env: "{{ container.env | default(omit) }}"
+    env_file: "{{ container.env_file | default(omit) }}"
+    env_host: "{{ container.env_host | default(omit) }}"
+    etc_hosts: "{{ container.etc_hosts | default(omit) }}"
+    executable: "{{ container.executable | default(omit) }}"
+    expose: "{{ container.expose | default(omit) }}"
+    exposed: "{{ container.exposed | default(omit) }}"
+    exposed_ports: "{{ container.exposed_ports | default(omit) }}"
+    generate_systemd:
+      after: "{{ container.generate_systemd.after | default(omit) }}"
+      container_prefix: "{{ container.generate_systemd.container_prefix | default('container') }}"
+      names: "{{ container.generate_systemd.names | default(true) }}"
+      new: "{{ container.generate_systemd.new | default(omit) }}"
+      no_header: "{{ container.generate_systemd.no_header | default(omit) }}"
+      path: "{{ container.generate_systemd.path | default(default_systemd_path) }}"
+      pod_prefix: "{{ container.generate_systemd.pod_prefix | default(omit) }}"
+      requires: "{{ container.generate_systemd.requires | default(omit) }}"
+      restart_policy: "{{ container.generate_systemd.restart_policy | default('on-failure') }}"
+      restart_sec: "{{ container.generate_systemd.restart_sec | default(omit) }}"
+      separator: "{{ container.generate_systemd.separator | default(omit) }}"
+      start_timeout: "{{ container.generate_systemd.start_timeout | default(omit) }}"
+      stop_timeout: "{{ container.generate_systemd.stop_timeout | default(omit) }}"
+      time: "{{ container.generate_systemd.time | default(omit) }}"
+      wants: "{{ container.generate_systemd.wants | default(omit) }}"
+    gidmap: "{{ container.gidmap | default(omit) }}"
+    group_add: "{{ container.group_add | default(omit) }}"
+    healthcheck: "{{ container.healthcheck | default(omit) }}"
+    healthcheck_failure_action: "{{ container.healthcheck_failure_action | default(omit) }}"
+    healthcheck_interval: "{{ container.healthcheck_interval | default(omit) }}"
+    healthcheck_retries: "{{ container.healthcheck_retries | default(omit) }}"
+    healthcheck_start_period: "{{ container.healthcheck_start_period | default(omit) }}"
+    healthcheck_timeout: "{{ container.healthcheck_timeout | default(omit) }}"
+    hooks_dir: "{{ container.hooks_dir | default(omit) }}"
+    hostname: "{{ container.hostname | default(omit) }}"
+    http_proxy: "{{ container.http_proxy | default(omit) }}"
+    image: "{{ container.image | default(omit) }}"
+    image_strict: "{{ container.image_strict | default(omit) }}"
+    image_volume: "{{ container.image_volume | default(omit) }}"
+    init: "{{ container.init | default(omit) }}"
+    init_path: "{{ container.init_path | default(omit) }}"
+    interactive: "{{ container.interactive | default(omit) }}"
+    ip: "{{ container.ip | default(omit) }}"
+    ipc: "{{ container.ipc | default(omit) }}"
+    ipc_mode: "{{ container.ipc_mode | default(omit) }}"
+    kernel_memory: "{{ container.kernel_memory | default(omit) }}"
+    label: "{{ container.label | default(omit) }}"
+    labels: "{{ container.labels | default(omit) }}"
+    label_file: "{{ container.label_file | default(omit) }}"
+    log_driver: "{{ container.log_driver | default(omit) }}"
+    log_level: "{{ container.log_level | default(omit) }}"
+    log_opt: "{{ container.log_opt | default(omit) }}"
+    log_options: "{{ container.log_options | default(omit) }}"
+    mac_address: "{{ container.mac_address | default(omit) }}"
+    memory: "{{ container.memory | default(omit) }}"
+    memory_reservation: "{{ container.memory_reservation | default(omit) }}"
+    memory_swap: "{{ container.memory_swap | default(omit) }}"
+    memory_swappiness: "{{ container.memory_swappiness | default(omit) }}"
+    mount: "{{ container.mount | default(omit) }}"
+    mounts: "{{ container.mounts | default(omit) }}"
+    net: "{{ container.net | default(omit) }}"
+    network: "{{ container.network | default(omit) }}"
+    network_aliases: "{{ container.network_aliases | default(omit) }}"
+    network_mode: "{{ container.network_mode | default(omit) }}"
+    no_hosts: "{{ container.no_hosts | default(omit) }}"
+    oom_kill_disable: "{{ container.oom_kill_disable | default(omit) }}"
+    oom_score_adj: "{{ container.oom_score_adj | default(omit) }}"
+    pid: "{{ container.pid | default(omit) }}"
+    pids_limit: "{{ container.pids_limit | default(omit) }}"
+    pid_mode: "{{ container.pid_mode | default(omit) }}"
+    pod: "{{ container.pod | default(omit) }}"
+    ports: "{{ container.ports | default(omit) }}"
+    privileged: "{{ container.privileged | default(omit) }}"
+    publish: "{{ container.publish | default(omit) }}"
+    publish_all: "{{ container.publish_all | default(omit) }}"
+    published: "{{ container.published | default(omit) }}"
+    published_ports: "{{ container.published_ports | default(omit) }}"
+    read_only: "{{ container.read_only | default(omit) }}"
+    read_only_tmpfs: "{{ container.read_only_tmpfs | default(omit) }}"
+    recreate: "{{ container.recreate | default(omit) }}"
+    requires: "{{ container.requires | default(omit) }}"
+    restart_policy: "{{ container.restart_policy | default(omit) }}"
+    rm: "{{ container.rm | default(omit) }}"
+    remove: "{{ container.remove | default(omit) }}"
+    rootfs: "{{ container.rootfs | default(omit) }}"
+    sdnotify: "{{ container.sdnotify | default(omit) }}"
+    secrets: "{{ container.secrets | default(omit) }}"
+    security_opt: "{{ container.security_opt | default(omit) }}"
+    shm_size: "{{ container.shm_size | default(omit) }}"
+    sig_proxy: "{{ container.sig_proxy | default(omit) }}"
+    stop_signal: "{{ container.stop_signal | default(omit) }}"
+    stop_timeout: "{{ container.stop_timeout | default(omit) }}"
+    subgidname: "{{ container.subgidname | default(omit) }}"
+    subuidname: "{{ container.subuidname | default(omit) }}"
+    sysctl: "{{ container.sysctl | default(omit) }}"
+    systemd: "{{ container.systemd | default(omit) }}"
+    timezone: "{{ container.timezone | default(omit) }}"
+    tmpfs: "{{ container.tmpfs | default(omit) }}"
+    tty: "{{ container.tty | default(omit) }}"
+    uidmap: "{{ container.uidmap | default(omit) }}"
+    ulimit: "{{ container.ulimit | default(omit) }}"
+    ulimits: "{{ container.ulimits | default(omit) }}"
+    user: "{{ container.user | default(omit) }}"
+    userns: "{{ container.userns | default(omit) }}"
+    userns_mode: "{{ container.userns_mode | default(omit) }}"
+    uts: "{{ container.uts | default(omit) }}"
+    volume: "{{ container.volume | default(omit) }}"
+    volumes: "{{ container.volumes | default(omit) }}"
+    volumes_from: "{{ container.volumes_from | default(omit) }}"
+    workdir: "{{ container.workdir | default(omit) }}"
+    working_dir: "{{ container.working_dir | default(omit) }}"
+  loop: "{{ podman_containers }}"
+  loop_control:
+    loop_var: container
+
+- name: Enable service
+  become: "{{ 'run_as' in container }}"
+  become_user: "{{ container.run_as | default(omit) }}"
+  vars:
+    prefix: |-
+      {{
+        container.generate_systemd.container_prefix |
+        default('container')
+      }}
+    uid: |-
+      {{
+        ansible_facts.getent_passwd[
+          container.run_as | default(ansible_user_id)
+        ].1
+      }}
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: "{{ prefix }}-{{ container.name }}"
+    state: started
+    enabled: true
+    scope: "{{ ('run_as' in container) | ternary('user', 'system') }}"
+  loop: |
+    {{
+      (podman_containers | selectattr('enabled', 'undefined'))
+    + (podman_containers | selectattr('enabled', 'defined') | selectattr('enabled'))
+    }}
+  loop_control:
+    loop_var: container

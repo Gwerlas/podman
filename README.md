@@ -27,9 +27,40 @@ ansible-galaxy install gwerlas.system
 - name: My playbook
   hosts: all
   roles:
-    - gwerlas.system
-    - gwerlas.podman
+    - role: gwerlas.system
+    - role: gwerlas.podman
 ```
+
+Facts
+-----
+
+Defined facts of this role :
+
+- `podman_version`
+- `podman_packages`
+
+You can get the facts only, without doing any changes on your nodes :
+
+```yaml
+- name: My playbook
+  hosts: all
+  tasks:
+    - name: Get facts
+      ansible.builtin.import_role:
+        name: gwerlas.podman
+        tasks_from: facts
+
+    - name: Display
+      ansible.builtin.debug:
+        var: podman_packages
+```
+
+Tags
+----
+
+You can filter on some specific tasks using this tags :
+
+- `provision` : Provision resources only
 
 Role Variables
 --------------
@@ -304,12 +335,6 @@ An exemple of the way to be the more compatible with Docker as You can :
       vars:
         podman_mimic_docker: true
 ```
-
-Facts
------
-
-After the podman installation, the `podman_current_version` fact is set to permit
-some checks, and to adapt the code for the target node.
 
 License
 -------

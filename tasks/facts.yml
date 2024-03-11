@@ -26,5 +26,5 @@
 - name: Facts - Global
   ansible.builtin.set_fact:
     cacheable: true
-    podman_current_version: "{{ (result.rc == 0) | ternary(result.stdout.split(' ')[2], None) }}"
-    podman_packages_computed: "{{ packages_computed }}"
+    podman_version: "{{ (result.rc == 0) | ternary(result.stdout.split(' ')[2], None) }}"
+    podman_packages: "{{ packages_computed }}"

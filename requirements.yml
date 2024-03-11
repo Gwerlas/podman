@@ -1,7 +1,9 @@
 collections:
+  - name: community.general
+    version: ">=8.2.0"
   - name: containers.podman
 roles:
   - name: gwerlas.system
     scm: git
     src: https://gitlab.com/yoanncolin/ansible/roles/system.git
-    version: 0.11.0
+    version: 0.12.0
