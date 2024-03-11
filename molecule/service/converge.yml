@@ -1,0 +1,22 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    podman_users:
+      - name: myapp
+      - name: nginx
+        home: /data/web
+        create_home: false
+        password_lock: true
+        shell: /usr/bin/nologin
+        system: true
+        uid: 300
+    podman_containers:
+      - run_as: nginx
+        name: nginx
+        image: docker.io/nginx:latest
+        enabled: true
+        publish:
+          - 8080:80
+  roles:
+    - gwerlas.podman

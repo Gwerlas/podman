@@ -1,12 +1,12 @@
 ---
 - name: Packages - Load variables
-  when: podman_packages_computed is undefined
+  when: podman_packages is undefined
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/facts.yml"
 
 - name: Packages
   become: true
   ansible.builtin.package:
-    name: "{{ podman_packages_computed }}"
+    name: "{{ podman_packages }}"
   register: result
   until: result.failed == false
   retries: "{{ podman_retries }}"

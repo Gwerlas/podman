@@ -18,6 +18,11 @@
 - name: Services
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/services.yml"
 
+- name: Provision the resources 
+  tags:
+    - provision
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/provision.yml"
+
 - name: Wrappers
   when: podman_wrappers | length > 0
   tags:

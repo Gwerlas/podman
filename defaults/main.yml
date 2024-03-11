@@ -10,6 +10,10 @@ podman_users:
 
 podman_retries: "{{ system_retries | default(2) }}"
 
+# Provisioning
+podman_networks: []
+podman_containers: []
+
 # Wrappers
 podman_wrappers: []
 podman_wrappers_path: /usr/local/bin

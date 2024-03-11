@@ -1,0 +1,27 @@
+---
+- name: Verify that myapp user can run a container
+  hosts: all
+  tasks:
+    - name: Hello world
+      become: true
+      become_user: myapp
+      containers.podman.podman_container:
+        name: test
+        image: hello-world
+        detach: false
+
+    - name: Test HTTP server
+      ansible.builtin.uri:
+        url: http://localhost:8080
+        method: HEAD
+        use_proxy: false
+
+    - name: Reboot
+      become: true
+      ansible.builtin.reboot:
+
+    - name: Test HTTP server after reboot
+      ansible.builtin.uri:
+        url: http://localhost:8080
+        method: HEAD
+        use_proxy: false

@@ -2,8 +2,9 @@
 - name: Prepare
   hosts: all
   vars:
-    system_packages_add_by_key:
-      - acl
+    system_manage_time: false
+    system_firewall_rules:
+      - port: 8080/tcp
     system_users:
       - name: vagrant
       - name: myapp

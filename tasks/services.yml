@@ -8,7 +8,7 @@
     - name: Services - Systemd sockets
       when:
         - ansible_service_mgr == "systemd"
-        - podman_current_version is version('3.0', '>=')
+        - podman_version is version('3.0', '>=')
       block:
         - name: Podman socket
           become: "{{ user.name != ansible_user_id }}"
