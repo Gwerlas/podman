@@ -1,9 +1,9 @@
 galaxy_info:
-  author: Yoann Colin
+  author: Yoann Gauthier-Colin
   namespace: gwerlas
   description: Install and configure podman
 
-  issue_tracker_url: https://gitlab.com/gwerlas/ansible/roles/podman/-/issues
+  issue_tracker_url: https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues
 
   license: BSD-3-Clause
 
@@ -19,8 +19,6 @@ galaxy_info:
         - bookworm
     - name: EL
       versions:
-        - "7"
-        - "8"
         - "9"
     - name: Fedora
       versions:
@@ -28,8 +26,10 @@ galaxy_info:
     - name: Ubuntu
       versions:
         - jammy
+        - noble
 
   galaxy_tags:
     - podman
 
-dependencies: []
+dependencies:
+  - gwerlas.system

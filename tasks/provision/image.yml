@@ -1,0 +1,25 @@
+---
+- name: User escalation
+  become: "{{ 'run_as' in container }}"
+  become_user: "{{ container.run_as | default(omit) }}"
+  block:
+    # Due to an idempotency issue in containers.podman.podman_image, we have to get informations first...
+    - name: Image info
+      containers.podman.podman_image_info:
+        name: "{{ container.image }}"
+      register: infos
+
+    - name: Images
+      containers.podman.podman_image:
+        name: "{{ container.image }}"
+      register: result
+      until: not result.failed
+      retries: "{{ podman_retries }}"
+      delay: "{{ podman_delay }}"
+      # ... and compare the pulled image ID
+      changed_when: |
+        ((
+          result.image | json_query('[-1].Id')
+        ) != (
+          infos.images | json_query('[-1].Id')
+        ))

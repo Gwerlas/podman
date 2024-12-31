@@ -10,6 +10,7 @@
   register: result
   until: result.failed == false
   retries: "{{ podman_retries }}"
+  delay: "{{ podman_delay }}"
 
 - name: Packages - Update facts   # noqa no-handler
   when: result.changed

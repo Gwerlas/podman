@@ -6,12 +6,16 @@
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/pre-checks.yml"
 
 - name: Packages
+  tags:
+    - packages
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/packages.yml"
 
 - name: Configuration
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/config.yml"
 
 - name: Rootless mode
+  tags:
+    - users
   when: podman_users | length > 0
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/rootless.yml"
 

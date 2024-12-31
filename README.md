@@ -17,11 +17,41 @@ The Linux base system configured with :
 - Sudo
 - Package manager ready to use
 
-The `gwerlas.system` role can help You :
+Dependencies
+------------
+
+Everything is in the [requirements.yml](requirements.yml) file.
+
+### Collections
+
+For obvious reasons, You'll need the [Containers.Podman][] collection :
+
+```sh
+ansible-galaxy collection install containers.podman
+```
+
+To be able to manage the required kernel modules, You'll need to have the
+[Community.General][] collection version 8.2 or upper to be installed :
+
+```sh
+ansible-galaxy collection install community.general
+```
+
+[Community.General]: https://docs.ansible.com/ansible/latest/collections/community/general/index.html
+[Containers.Podman]: https://docs.ansible.com/ansible/latest/collections/containers/podman/index.html
+
+### Roles
+
+The `gwerlas.system` is used for user management when
+`podman_create_missing_users` is `true`.
+
+Be sure to have it installed :
 
 ```sh
 ansible-galaxy install gwerlas.system
 ```
+
+Also, it may help You to prepare your node :
 
 ```yaml
 - name: My playbook
@@ -60,7 +90,10 @@ Tags
 
 You can filter on some specific tasks using this tags :
 
-- `provision` : Provision resources only
+- `packages`
+- `provision` : Provisioned containers, images and networks
+- `users` : Rootless directories, subgids and subuids
+- `wrappers` : [Wrappers](#wrappers)
 
 Role Variables
 --------------

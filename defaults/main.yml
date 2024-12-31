@@ -8,7 +8,8 @@ podman_create_missing_users: true
 podman_users:
   - name: "{{ ansible_user_id }}"
 
-podman_retries: "{{ system_retries | default(2) }}"
+podman_retries: "{{ system_retries | default(3) }}"
+podman_delay: "{{ system_delay | default(5) }}"
 
 # Provisioning
 podman_networks: []

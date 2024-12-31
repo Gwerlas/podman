@@ -2,6 +2,8 @@
 - name: Converge
   hosts: all
   vars:
+    podman_retries: 10
+    podman_delay: 3
     podman_users:
       - name: myapp
       - name: nginx

@@ -34,7 +34,7 @@
   ansible.builtin.getent:
     database: passwd
 
-- name: Provision containers
+- name: Containers
   become: "{{ 'run_as' in container }}"
   become_user: "{{ container.run_as | default(omit) }}"
   vars:

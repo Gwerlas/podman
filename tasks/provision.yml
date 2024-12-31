@@ -1,6 +1,9 @@
 ---
 - name: Provision networks
-  ansible.builtin.import_tasks: "{{ role_path }}/tasks/networks.yml"
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/provision/networks.yml"
+
+- name: Provision images
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/provision/images.yml"
 
 - name: Provision containers
-  ansible.builtin.import_tasks: "{{ role_path }}/tasks/containers.yml"
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/provision/containers.yml"
