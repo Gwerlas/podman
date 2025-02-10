@@ -336,8 +336,10 @@ podman_wrappers:
 ```
 
 Most of arguments are the same as `podman run` parameters, we support almost
-all of the [ansible podman_container module][] arguments as is
-(except of aliases and services oriented features).
+all of the [ansible podman_container module][] arguments plus :
+
+- `username`: Username to use when authenticating to remote registries.
+- `password`: Password to use when authenticating to remote registries.
 
 [ansible podman_container module]: https://docs.ansible.com/ansible/latest/collections/containers/podman/podman_container_module.html
 

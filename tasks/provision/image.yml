@@ -12,6 +12,9 @@
     - name: Images
       containers.podman.podman_image:
         name: "{{ container.image }}"
+        password: "{{ container.password | default(omit) }}"
+        username: "{{ container.username | default(omit) }}"
+      no_log: true
       register: result
       until: not result.failed
       retries: "{{ podman_retries }}"
