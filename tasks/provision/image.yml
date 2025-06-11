@@ -1,20 +1,20 @@
 ---
 - name: User escalation
-  become: "{{ 'run_as' in container }}"
-  become_user: "{{ container.run_as | default(omit) }}"
+  become: "{{ 'owner' in image }}"
+  become_user: "{{ image.owner | default(omit) }}"
+  no_log: "{{ 'password' in image }}"
   block:
     # Due to an idempotency issue in containers.podman.podman_image, we have to get informations first...
     - name: Image info
       containers.podman.podman_image_info:
-        name: "{{ container.image }}"
+        name: "{{ image.name }}"
       register: infos
 
     - name: Images
       containers.podman.podman_image:
-        name: "{{ container.image }}"
-        password: "{{ container.password | default(omit) }}"
-        username: "{{ container.username | default(omit) }}"
-      no_log: true
+        name: "{{ image.name }}"
+        password: "{{ image.password | default(omit) }}"
+        username: "{{ image.username | default(omit) }}"
       register: result
       until: not result.failed
       retries: "{{ podman_retries }}"

@@ -1,18 +1,1 @@
----
-- name: Prepare
-  hosts: all
-  vars:
-    system_manage_time: false
-    system_firewall_rules:
-      - port: 8080/tcp
-    system_users:
-      - name: vagrant
-      - name: myapp
-        home: /data
-        create_home: false
-        password_lock: true
-        shell: /usr/bin/nologin
-        system: true
-        uid: 200
-  roles:
-    - gwerlas.system
+../default/prepare.yml

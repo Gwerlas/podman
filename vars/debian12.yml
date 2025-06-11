@@ -7,9 +7,7 @@ packages:
   podman:
     - buildah
     - fuse-overlayfs
-    - netavark
-    - passt
     - podman
-    - uidmap
+    - slirp4netns
   toolbox:
     - podman-toolbox

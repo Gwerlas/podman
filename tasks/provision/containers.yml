@@ -6,16 +6,12 @@
         (
           (ansible_user_id == 'root') |
           ternary(
-            podman_containers | selectattr('run_as', 'defined') | selectattr('run_as', '!=', 'root'),
-            podman_containers | rejectattr('run_as', '==', 'root')
+            podman_containers | json_query('[?run_as!=`root`]'),
+            podman_containers | json_query('[?run_as==`root`]')
           )
         )
       }}
-    enabled_rootless_containers: |
-      {{
-        (rootless_containers | selectattr('enabled', 'undefined'))
-      + (rootless_containers | selectattr('enabled', 'defined') | selectattr('enabled'))
-      }}
+    enabled_rootless_containers: "{{ rootless_containers | json_query('[?enabled!=`false`]') }}"
   when:
     - enabled_rootless_containers | length > 0
     - ansible_service_mgr != "systemd"
@@ -212,8 +208,8 @@
     loop_var: container
 
 - name: Enable service
-  become: "{{ 'run_as' in container }}"
-  become_user: "{{ container.run_as | default(omit) }}"
+  become: "{{ container.run_as != None }}"
+  become_user: "{{ (container.run_as != None) | ternary(container.run_as, omit) }}"
   vars:
     prefix: |-
       {{
@@ -233,11 +229,12 @@
     name: "{{ prefix }}-{{ container.name }}"
     state: started
     enabled: true
-    scope: "{{ ('run_as' in container) | ternary('user', 'system') }}"
+    scope: "{{ (container.run_as != None) | ternary('user', 'system') }}"
   loop: |
     {{
-      (podman_containers | selectattr('enabled', 'undefined'))
-    + (podman_containers | selectattr('enabled', 'defined') | selectattr('enabled'))
-    }}
+      podman_containers | json_query('[?enabled != `false`].{
+        name: name,
+        run_as: run_as
+      }') }}
   loop_control:
     loop_var: container

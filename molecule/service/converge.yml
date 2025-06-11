@@ -13,6 +13,9 @@
         shell: /usr/bin/nologin
         system: true
         uid: 300
+    podman_images:
+      - name: docker.io/nginx:latest
+        owner: nginx
     podman_containers:
       - run_as: nginx
         name: nginx

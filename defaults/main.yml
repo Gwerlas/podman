@@ -12,6 +12,7 @@ podman_retries: "{{ system_retries | default(3) }}"
 podman_delay: "{{ system_delay | default(5) }}"
 
 # Provisioning
+podman_images: []
 podman_networks: []
 podman_containers: []
 

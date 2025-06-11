@@ -6,8 +6,6 @@ packages:
     - podman-docker
   podman:
     - podman
-  toolbox:
-    - toolbox
 
 packages_computed: |
   {{

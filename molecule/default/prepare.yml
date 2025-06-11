@@ -3,5 +3,6 @@
   hosts: all
   vars:
     system_manage_time: false
+    system_packages_upgrade: true
   roles:
     - role: gwerlas.system

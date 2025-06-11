@@ -5,11 +5,8 @@ packages:
   docker:
     - podman-docker
   podman:
-    - buildah
-    - fuse-overlayfs
+    - podman
     - netavark
     - passt
-    - podman
-    - uidmap
   toolbox:
-    - podman-toolbox
+    - toolbox

@@ -26,5 +26,8 @@
 - name: Pre-checks - Kernel modules
   become: true
   community.general.modprobe:
-    name: ip_tables
+    name: "{{ item }}"
     persistent: present
+  loop:
+    - ip_tables
+    - tun

@@ -1,6 +1,6 @@
 ---
 - name: Images
   ansible.builtin.include_tasks: "{{ role_path }}/tasks/provision/image.yml"
-  loop: "{{ podman_containers }}"
+  loop: "{{ podman_images }}"
   loop_control:
-    loop_var: container
+    loop_var: image

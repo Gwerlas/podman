@@ -6,4 +6,4 @@ roles:
   - name: gwerlas.system
     scm: git
     src: https://gitlab.com/yoanncolin/ansible/roles/system.git
-    version: 0.13.9
+    version: 0.16.1

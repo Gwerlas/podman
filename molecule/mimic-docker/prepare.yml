@@ -1,5 +1,1 @@
----
-- name: Prepare
-  hosts: all
-  roles:
-    - gwerlas.system
+../default/prepare.yml
