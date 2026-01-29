@@ -2,9 +2,6 @@
 - name: Load facts
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/facts.yml"
 
-- name: Pre checks
-  ansible.builtin.import_tasks: "{{ role_path }}/tasks/pre-checks.yml"
-
 - name: Packages
   tags:
     - packages
