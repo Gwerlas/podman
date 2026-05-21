@@ -274,6 +274,20 @@ cgroup_manager = "cgroupfs"
 
 For Debian 11 only, we overwrite the distribution defaults by the configuration above.
 
+### Optional features
+
+The `podman_compose_install`, `podman_toolbox_install` and `podman_mimic_docker`
+options enable extra features that rely on distribution packages. The exact
+package names mapped to each option are defined in the [`vars/`](vars/) files
+of this role.
+
+When the corresponding package is **not available** for the target distribution
+(for example, `podman-toolbox` is not packaged on Gentoo), the option is
+silently a no-op: nothing is installed and no error is raised. This keeps the
+role usable across distributions with uneven packaging coverage, at the cost of
+masking missing features — check the relevant `vars/` file if You're unsure
+whether a given option is actually wired up for your distribution.
+
 ### Podman compose
 
 The `podman_compose_install` set to `true` will install `podman-compose` if it is available
