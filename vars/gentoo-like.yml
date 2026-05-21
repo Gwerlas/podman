@@ -1,5 +1,7 @@
 ---
 packages:
+  compose:
+    - app-containers/podman-compose
   podman:
     - app-containers/buildah
     - app-containers/podman
@@ -7,3 +9,7 @@ packages:
 default_registries_config:
   unqualified-search-registries:
     - docker.io
+
+default_containers_config:
+  network:
+    firewall_driver: nftables
