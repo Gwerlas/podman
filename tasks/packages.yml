@@ -16,12 +16,7 @@
   when: result.changed
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/facts.yml"
 
-- name: Packages - Symlink docker to podman
-  when:
-    - podman_mimic_docker
-    - not 'docker' in packages
-  become: true
-  ansible.builtin.file:
-    src: /usr/bin/podman
-    dest: /usr/bin/docker
-    state: link
+# Podman has to be installed before we can link the docker command to it.
+- name: Packages - Mimic Docker
+  when: podman_mimic_docker | bool
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/mimic-docker.yml"

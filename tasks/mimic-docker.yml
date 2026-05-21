@@ -1,0 +1,28 @@
+---
+# Podman's own docker wrapper (podman-docker, or the Gentoo `wrapper` USE flag)
+# prints "podman version ...", so only a real Docker matches here.
+- name: Mimic Docker - Look for a real Docker
+  check_mode: false
+  ansible.builtin.command:
+    cmd: docker --version
+  changed_when: false
+  failed_when: false
+  register: docker_version
+
+- name: Mimic Docker - Fail because Docker is installed
+  when: docker_version.stdout is match('Docker')
+  ansible.builtin.fail:
+    msg: >-
+      Docker is installed on this host, refusing to mimic it.
+      Set podman_mimic_docker to false or remove Docker first.
+
+# Distributions shipping a podman-docker package declare it in packages.docker,
+# even empty when the wrapper comes from elsewhere (Gentoo USE flag). The
+# symlink is only for the others.
+- name: Mimic Docker - Symlink docker to podman
+  when: "'docker' not in packages"
+  become: true
+  ansible.builtin.file:
+    src: /usr/bin/podman
+    dest: /usr/bin/docker
+    state: link

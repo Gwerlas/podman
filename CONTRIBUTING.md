@@ -33,6 +33,12 @@ box.
 
 Look at the `vars/debian11.yml` for example.
 
+The `packages.docker` key deserves a special mention : when it is defined,
+the role assumes the distribution provides its own `docker` wrapper (the
+`podman-docker` package for most of them). Define it **empty** when the
+wrapper comes from somewhere else, like the `wrapper` USE flag on Gentoo :
+this prevents the role from creating its own symlink over it.
+
 Target properties : `vars/` files and issue labels
 --------------------------------------------------
 

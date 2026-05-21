@@ -306,11 +306,23 @@ for the distribution of the targetted host.
 
 #### Docker in the $PATH
 
-You can mimic Docker throw the `podman_mimic_docker` parameter set to `true`. If the package
-`podman-docker` is available for the target Linux distribution, il will be installed, in the
-other cases a symlink will be created.
+You can mimic Docker throw the `podman_mimic_docker` parameter set to `true`. A `docker`
+command is then provided in the `$PATH`, by the most native mean available on the target
+Linux distribution :
+
+| Distribution                   | Provided by                                       |
+| ------------------------------ | ------------------------------------------------- |
+| Debian like, RedHat like, Arch | the `podman-docker` package                       |
+| Gentoo like                    | the `wrapper` USE flag on `app-containers/podman` |
+| Others (Debian 11, RedHat 7)   | a `docker` symlink to `podman`, made by this role |
 
 So the scripts calling `docker` will transparently use `podman` instead, or almost.
+
+`docker compose` follows, as long as `podman_compose_install` is set to `true` and the
+installed Podman is `4.7` or upper, which routes it to `podman-compose` by itself.
+
+If a **real** Docker is already installed on the target host, the role fails instead of
+overwriting its `docker` command : remove Docker, or set `podman_mimic_docker` to `false`.
 
 #### Daemon socket
 
