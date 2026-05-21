@@ -25,4 +25,4 @@ argument_specs:
         description: List of users that can run podman
         type: list
         elements: dict
-        default: "[{name: '{{ ansible_user_id }}'}]"
+        default: "[{name: '{{ ansible_facts.user_id }}'}]"

@@ -108,7 +108,7 @@ podman_mimic_docker: false
 
 podman_create_missing_users: true
 podman_users:
-  - name: "{{ ansible_user_id }}"
+  - name: "{{ ansible_facts.user_id }}"
 
 podman_wrappers: []
 podman_wrappers_path: /usr/local/bin

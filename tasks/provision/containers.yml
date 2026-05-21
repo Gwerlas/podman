@@ -4,7 +4,7 @@
     rootless_containers: |
       {{
         (
-          (ansible_user_id == 'root') |
+          (ansible_facts.user_id == 'root') |
           ternary(
             podman_containers | json_query('[?run_as!=`root`]'),
             podman_containers | json_query('[?run_as==`root`]')
@@ -14,10 +14,10 @@
     enabled_rootless_containers: "{{ rootless_containers | json_query('[?enabled!=`false`]') }}"
   when:
     - enabled_rootless_containers | length > 0
-    - ansible_service_mgr != "systemd"
+    - ansible_facts.service_mgr != "systemd"
   ansible.builtin.fail:
     msg: |
-      {{ ansible_service_mgr | capitalize }} doesn't support user services.
+      {{ ansible_facts.service_mgr | capitalize }} doesn't support user services.
       Set 'enabled: false' to your 'podman_containers' entries if You don't
       care.
 
@@ -42,7 +42,7 @@
           container.state | default('started')
         )
       }}
-    uname: "{{ container.run_as | default(ansible_user_id) }}"
+    uname: "{{ container.run_as | default(ansible_facts.user_id) }}"
     uid: "{{ ansible_facts.getent_passwd[uname].1 }}"
     default_systemd_path: |-
       {{
@@ -219,7 +219,7 @@
     uid: |-
       {{
         ansible_facts.getent_passwd[
-          container.run_as | default(ansible_user_id)
+          container.run_as | default(ansible_facts.user_id)
         ].1
       }}
   environment:

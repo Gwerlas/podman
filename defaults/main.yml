@@ -6,7 +6,7 @@ podman_mimic_docker: false
 
 podman_create_missing_users: true
 podman_users:
-  - name: "{{ ansible_user_id }}"
+  - name: "{{ ansible_facts.user_id }}"
 
 podman_retries: "{{ system_retries | default(3) }}"
 podman_delay: "{{ system_delay | default(5) }}"

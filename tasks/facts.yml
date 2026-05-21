@@ -9,10 +9,10 @@
       paths:
         - "{{ role_path }}/vars"
   loop:
-    - "{{ ansible_os_family | lower }}-like.yml"                                          # debian-like,  redhat-like, etc.
-    - "{{ ansible_os_family | lower }}{{ ansible_distribution_major_version }}-like.yml"  # redhat7-like
-    - "{{ ansible_distribution | lower }}{{ ansible_distribution_major_version }}.yml"    # debian11
-    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_release | lower }}.yml" # ubuntu-jammy
+    - "{{ ansible_facts.os_family | lower }}-like.yml"                                          # debian-like,  redhat-like, etc.
+    - "{{ ansible_facts.os_family | lower }}{{ ansible_facts.distribution_major_version }}-like.yml"  # redhat7-like
+    - "{{ ansible_facts.distribution | lower }}{{ ansible_facts.distribution_major_version }}.yml"    # debian11
+    - "{{ ansible_facts.distribution | lower }}-{{ ansible_facts.distribution_release | lower }}.yml" # ubuntu-jammy
   loop_control:
     loop_var: vars_file
 

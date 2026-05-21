@@ -4,7 +4,7 @@
   vars:
     default_home: "{{ user.home | default('/home/' + user.name) }}"
   ansible.builtin.file:
-    path: "{{ getent_passwd[user.name].4 | default(default_home) }}"
+    path: "{{ ansible_facts['getent_passwd'][user.name].4 | default(default_home) }}"
     state: directory
     owner: "{{ user.uid | default(user.name) }}"
     mode: u+rwx,go+rx

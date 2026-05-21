@@ -2,10 +2,10 @@
 - name: Rootless - Subids
   when:
     - user.name != 'root'
-    - user.name in getent_passwd or 'subuid_starts' in user
+    - user.name in ansible_facts['getent_passwd'] or 'subuid_starts' in user
   become: true
   vars:
-    uid: "{{ getent_passwd[user.name].1 | default(user.uid) }}"
+    uid: "{{ ansible_facts['getent_passwd'][user.name].1 | default(user.uid) }}"
     subuid_starts: "{{ user.subuid_starts | default(uid | int | bitwise_shift_left(16)) }}"
     subuid_length: "{{ user.subuid_length | default(65536) }}"
   block:
