@@ -2,6 +2,7 @@
 packages:
   compose:
     - app-containers/podman-compose
+  docker: []
   podman:
     - app-containers/buildah
     - app-containers/podman

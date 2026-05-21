@@ -1,0 +1,6 @@
+---
+- name: Rebuild
+  become: true
+  community.general.portage:
+    package: "{{ podman_packages }}"
+    newuse: true

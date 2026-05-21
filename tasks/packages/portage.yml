@@ -1,0 +1,8 @@
+---
+- name: Packages - Portage use flags
+  become: true
+  ansible.builtin.template:
+    src: portage.use.j2
+    dest: /etc/portage/package.use/podman
+    mode: "0644"
+  notify: Rebuild

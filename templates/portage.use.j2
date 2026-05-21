@@ -1,3 +1,7 @@
 # Ansible managed - do not edit
 
 net-firewall/iptables nftables
+
+{% if podman_mimic_docker | bool %}
+app-containers/podman   wrapper
+{% endif %}

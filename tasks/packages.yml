@@ -3,6 +3,12 @@
   when: podman_packages is undefined
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/facts.yml"
 
+- name: Packages - Configuration
+  vars:
+    task_file: "{{ role_path }}/tasks/packages/{{ ansible_facts.pkg_mgr }}.yml"
+  when: task_file is file
+  ansible.builtin.include_tasks: "{{ task_file }}"
+
 - name: Packages
   become: true
   ansible.builtin.package:

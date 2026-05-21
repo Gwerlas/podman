@@ -69,6 +69,18 @@ happens to touch. An issue true of every target carries no dimension label at
 all, and that absence is the correct answer rather than an oversight. On top of
 that, one label for the kind : `bug`, `feature` or `tech-debt`.
 
+Package manager specific tasks
+------------------------------
+
+If a distribution needs some work before its packages are installed, drop a
+`tasks/packages/<pkg_mgr>.yml` file, named after the `ansible_facts.pkg_mgr` fact. It is
+automatically included by `tasks/packages.yml` when it exists, before the installation.
+
+`tasks/packages/portage.yml` is the current example : it writes the USE flags in
+`/etc/portage/package.use/podman` **before** the first `emerge`, so Podman is built right
+away with the expected features, and notifies the `Rebuild` handler so an already
+installed Podman is rebuilt with `--newuse` when the flags change.
+
 Run tests
 ---------
 
