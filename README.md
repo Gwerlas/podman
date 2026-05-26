@@ -357,8 +357,8 @@ podman_wrappers:
       - /var/tmp:/var/tmp
     wrapper_extras:
       env_patterns:
-        - ANSIBLE_*
-        - MOLECULE_*
+        - ^ANSIBLE_
+        - ^MOLECULE_
       openstack_cli: true
       podman_socket: true
       same_pwd: true

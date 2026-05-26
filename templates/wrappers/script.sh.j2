@@ -53,7 +53,7 @@ CONTAINER_OPTS="$CONTAINER_OPTS -v $XDG_RUNTIME_DIR/podman/podman.sock:/run/podm
 {% if 'env_patterns' in wrapper.wrapper_extras %}
 # Sharing environment variables by patterns
 {% for pattern in wrapper.wrapper_extras.env_patterns | default([]) %}
-for envvar in $(env | grep '^{{ pattern }}=' | cut -d= -f1); do
+for envvar in $(env | grep '{{ pattern }}' | cut -d= -f1); do
   CONTAINER_OPTS="$CONTAINER_OPTS -e $envvar"
 done
 {% endfor%}
