@@ -17,3 +17,17 @@
       failed_when:
         - docker_run.rc > 0
         - not "'Hello from Docker!' in docker_run.stdout"
+
+    - name: Get the version of podman
+      ansible.builtin.command:
+        cmd: podman --version
+      changed_when: false
+      register: podman_version
+
+    # `docker compose` is delegated to podman-compose by podman itself, but only
+    # since Podman 4.7. Older distributions just have no compose at all.
+    - name: Compose through the docker command
+      when: podman_version.stdout.split() | last is version('4.7', '>=')
+      ansible.builtin.command:
+        cmd: docker compose version
+      changed_when: false
