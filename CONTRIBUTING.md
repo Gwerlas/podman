@@ -8,15 +8,47 @@ Requirements
 
 Install and configure :
 
-* docker
-* molecule
-* molecule-docker
+- libvirt / QEMU, with a running storage pool
+- python3-jmespath
+- molecule
+- molecule-plugins
+- ansible-lint
 
-Supporting a new distribution / version
----------------------------------------
+The scenarios drive libvirt directly through `community.libvirt` to boot a VM
+per platform from an upstream cloud image. There is no Vagrant, and no
+container driver either : Podman is the subject of this role, and a rootless
+Podman cannot nest inside a rootless container — `newuidmap` has no subuid
+range left to map.
 
-To add support to a new distribution / version, You can define some defaults
-if its packages do not work out of the box.
+`.claude/settings.json` ships a Claude Code hook that runs `ansible-lint` on
+every edited YAML file, so a syntax error surfaces at edit time rather than in
+the pipeline. It is skipped when the tool is missing, so it never blocks a
+contributor who has not installed it.
+
+Adding a new distribution or version
+------------------------------------
+
+The platforms the scenarios boot are catalogued in
+[`molecule/shared/platforms.yml`](molecule/shared/platforms.yml), which holds
+one cloud image URL per platform — or an `image_latest` pointer for a rolling
+release, resolved at runtime by `create.yml`. Each scenario's `molecule.yml`
+then picks a subset by name, with its own `groups` / `memory` / `vcpus`
+overrides.
+
+`meta/main.yml` carries the same list for Galaxy, under
+`galaxy_info.platforms`. Nothing keeps the two in step, so update both by hand
+and keep them in agreement : a platform is only really supported once it passes
+the scenarios *and* is declared to Galaxy.
+
+`molecule/shared/` also hosts the `create.yml`, `destroy.yml` and `prepare.yml`
+playbooks that every scenario points at through `provisioner.playbooks`.
+Molecule ignores that directory as a scenario because it carries no
+`molecule.yml`.
+
+### Distribution defaults
+
+You can define some defaults if the distribution packages do not work out of
+the box.
 
 Use the files in the `vars` directory to do it. You can use the
 dictionaries below :
@@ -73,20 +105,64 @@ Package manager specific tasks
 ------------------------------
 
 If a distribution needs some work before its packages are installed, drop a
-`tasks/packages/<pkg_mgr>.yml` file, named after the `ansible_facts.pkg_mgr` fact. It is
-automatically included by `tasks/packages.yml` when it exists, before the installation.
+`tasks/packages/<pkg_mgr>.yml` file, named after the `ansible_facts.pkg_mgr`
+fact. It is automatically included by `tasks/packages.yml` when it exists,
+before the installation.
 
 `tasks/packages/portage.yml` is the current example : it writes the USE flags in
-`/etc/portage/package.use/podman` **before** the first `emerge`, so Podman is built right
-away with the expected features, and notifies the `Rebuild` handler so an already
-installed Podman is rebuilt with `--newuse` when the flags change.
+`/etc/portage/package.use/podman` **before** the first `emerge`, so Podman is
+built right away with the expected features, and notifies the `Rebuild`
+handler so an already installed Podman is rebuilt with `--newuse` when the
+flags change.
 
 Run tests
 ---------
 
+Test the role with its defaults on every supported platform :
+
 ```sh
 molecule test
 ```
+
+Test the Docker mimicry, including `docker compose` :
+
+```sh
+molecule test -s mimic-docker
+```
+
+Test the provisioning of users, images and containers, with the rootless
+systemd units and a reboot :
+
+```sh
+molecule test -s service
+```
+
+Every scenario boots the same platform list, catalogued in
+[`molecule/shared/platforms.yml`](molecule/shared/platforms.yml). Comment out
+what you don't need in a scenario's `molecule.yml` while developing : a full
+run is thirteen VMs.
+
+Gentoo is the slow one, and it cannot be helped : the official binhost is built
+against an OpenRC profile, so its Podman carries `-systemd` and is refused by
+the systemd profile of the cloud image. The role drives USE flags itself
+anyway, which invalidates any binary package. Count about four minutes of
+`emerge` on twelve cores.
+
+libvirt connection and storage pool
+-----------------------------------
+
+The shared `create.yml` / `destroy.yml` honour two environment variables, with
+sensible defaults when unset :
+
+| Variable               | Default          | Purpose                         |
+| ---------------------- | ---------------- | ------------------------------- |
+| `LIBVIRT_DEFAULT_URI`  | `qemu:///system` | libvirt connection URI          |
+| `LIBVIRT_DEFAULT_POOL` | `default`        | name of the storage pool to use |
+
+`LIBVIRT_DEFAULT_URI` is the standard libvirt env var; `LIBVIRT_DEFAULT_POOL`
+is local to this project but follows the same naming convention. Both are
+forwarded into the molecule container by the wrapper (any `LIBVIRT_*` env var
+is passed through).
 
 Develop / Debug
 ---------------
@@ -98,6 +174,18 @@ molecule login -h <instance_name>
 # Do your changes by hand
 molecule verify
 ```
+
+Editing templates
+-----------------
+
+Nothing renders the templates automatically : `ansible-lint` does not read
+`.j2` files, and no CI job covers them. A template change is therefore only
+proven by running the scenario that uses it — `mimic-docker` for
+`portage.use.j2`, `default` for the `containers.conf` / `registries.conf` /
+`storage.conf` family — or by rendering it by hand.
+
+So review a template change by looking at what it produces, not by trusting the
+pipeline.
 
 Editing documentation
 ---------------------

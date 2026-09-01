@@ -1,4 +1,7 @@
 ---
+# Provisioning users, images and containers, including the rootless systemd
+# units — which is why this scenario needs real VMs. Its platform list is the
+# one molecule/default/molecule.yml declares.
 - name: Converge
   hosts: all
   vars:

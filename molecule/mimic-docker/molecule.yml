@@ -1,1 +1,37 @@
-../default/molecule.yml
+---
+dependency:
+  name: galaxy
+driver:
+  name: default
+# One representative per mechanism providing the `docker` command: the role's
+# own symlink on bullseye, the only supported platform packaging neither, the
+# podman-docker package on a Debian-like and on an EL, and the `wrapper` USE
+# flag on Gentoo.
+platforms:
+  - name: bullseye
+    groups:
+      - debian_like
+      - debian
+    memory: 2
+  - name: trixie
+    groups:
+      - debian_like
+      - debian
+    memory: 2
+  - name: alma10
+    groups:
+      - redhat_like
+    memory: 2
+  - name: gentoo
+    groups:
+      - gentoo
+    memory: 4
+    vcpus: 4
+provisioner:
+  name: ansible
+  playbooks:
+    create: ../shared/create.yml
+    destroy: ../shared/destroy.yml
+    prepare: ../shared/prepare.yml
+verifier:
+  name: ansible

@@ -1,6 +1,11 @@
 collections:
+  - name: ansible.posix
   - name: community.general
     version: ">=8.2.0"
+  # Only used by the Molecule scenarios, which drive libvirt to create the
+  # test VMs. See CONTRIBUTING.md.
+  - name: community.libvirt
+    version: ">=2.0"
   - name: containers.podman
 roles:
   - name: gwerlas.system
