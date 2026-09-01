@@ -51,7 +51,11 @@ Be sure to have it installed :
 ansible-galaxy install gwerlas.system
 ```
 
-Also, it may help You to prepare your node :
+It is not a dependency of this role : we never converge it for You, we only
+import its user management tasks when we have a missing user to create. Your
+nodes get Podman, nothing else.
+
+If You want it, play it yourself, it may help You to prepare your node :
 
 ```yaml
 - name: My playbook
@@ -364,7 +368,9 @@ editing the `podman_wrappers_values` variable.
 Dependencies
 ------------
 
-The `gwerlas.system` role for user management.
+The `gwerlas.system` role for user management : it has to be installed, but
+this role does not converge it. Only its `users` tasks are imported, and only
+when there is a missing user to create.
 
 Be sure to have the `containers.podman` installad on your system, or present
 in your `requirements.yml`.
