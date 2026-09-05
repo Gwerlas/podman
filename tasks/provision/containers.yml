@@ -31,6 +31,7 @@
     database: passwd
 
 - name: Containers
+  register: provisioned
   become: "{{ 'run_as' in container }}"
   become_user: "{{ container.run_as | default(omit) }}"
   vars:
@@ -207,6 +208,30 @@
   loop_control:
     loop_var: container
 
+# A daemon reload is an action, not a state : `ansible.builtin.systemd` has
+# nothing to compare it against and reports `changed` every run. So it stays out
+# of the task below, and happens only when podman rewrote a unit file.
+- name: Reload the unit files  # noqa no-handler
+  when: provisioned.changed
+  become: "{{ owner != None }}"
+  become_user: "{{ (owner != None) | ternary(owner, omit) }}"
+  vars:
+    uid: |-
+      {{
+        ansible_facts.getent_passwd[
+          owner | default(ansible_facts.user_id, true)
+        ].1
+      }}
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
+  ansible.builtin.systemd:
+    daemon_reload: true
+    scope: "{{ (owner != None) | ternary('user', 'system') }}"
+  loop: "{{ podman_containers | map(attribute='run_as', default=None) | unique | list }}"
+  loop_control:
+    loop_var: owner
+
 - name: Enable service
   become: "{{ container.run_as != None }}"
   become_user: "{{ (container.run_as != None) | ternary(container.run_as, omit) }}"
@@ -226,7 +251,6 @@
     XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
     DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
   ansible.builtin.systemd:
-    daemon_reload: true
     name: "{{ prefix }}-{{ container.name }}"
     state: started
     enabled: true
