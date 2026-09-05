@@ -12,17 +12,5 @@
     # does not, and `gentoo-kernel` alone compiles longer than everything else
     # combined. Take the prebuilt flavour instead.
     system_portage_kernel: gentoo-kernel-bin
-    # WORKAROUND — drop once gwerlas.system pulls it in itself. Its
-    # `Portage - Cleanup old kernels` handler runs `eclean-kernel`, which needs
-    # this module to read the zstd-compressed initramfs a dist-kernel produces;
-    # without it the handler exits 1 and fails the whole prepare. It has to go
-    # through the role's own package list : the cloud image has no Portage tree
-    # yet, so nothing can be emerged before gwerlas.system syncs it.
-    system_packages_add_by_name: >-
-      {{
-        ['dev-python/zstandard']
-        if ansible_facts.os_family == 'Gentoo'
-        else []
-      }}
   roles:
     - role: gwerlas.system
