@@ -1,16 +1,54 @@
 ---
-# Baseline shared by every scenario: the Podman role expects a host managed by
-# gwerlas.system, so we converge it first.
+# Minimal preparation shared by every scenario. Nothing here configures the
+# host : this role installs its own packages, and all it borrows from
+# gwerlas.system is the user management it imports. What a scenario owes the VM
+# is the baseline its converge builds on — an up-to-date system whose package
+# manager can install what follows.
 - name: Prepare
   hosts: all
-  vars:
-    system_manage_time: false
-    system_packages_upgrade: true
-    # Converging gwerlas.system on Gentoo changes the Portage profile and USE
-    # flags, which notifies an `emerge --deep --newuse @world`. Its packages
-    # come from the binhost that the cloud image configures — but the kernel
-    # does not, and `gentoo-kernel` alone compiles longer than everything else
-    # combined. Take the prebuilt flavour instead.
-    system_portage_kernel: gentoo-kernel-bin
-  roles:
-    - role: gwerlas.system
+  become: true
+  tasks:
+    - name: Upgrade Debian-like systems
+      when: ansible_facts.os_family == "Debian"
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+      register: prepare_upgrade
+
+    - name: Refresh EL/Fedora metadata
+      when: ansible_facts.os_family == "RedHat"
+      ansible.builtin.dnf:
+        update_cache: true
+
+    - name: Upgrade Arch Linux
+      when: ansible_facts.os_family == "Archlinux"
+      community.general.pacman:
+        update_cache: true
+        upgrade: true
+      register: prepare_upgrade_arch
+
+    - name: Prepare Portage
+      when: ansible_facts.os_family == "Gentoo"
+      block:
+        - name: Sync the Portage tree
+          community.general.portage:
+            sync: web
+
+        # The cloudinit image ships the official binhost in binrepos.conf but
+        # leaves getbinpkg off, so Portage ignores it and builds every
+        # dependency from source. Enabling a binhost is host policy, which here
+        # is the test baseline's job.
+        - name: Pull binary packages from the binhost the image declares
+          ansible.builtin.lineinfile:
+            path: /etc/portage/make.conf
+            line: FEATURES="${FEATURES} getbinpkg"
+            regexp: ^FEATURES="\$\{FEATURES\} getbinpkg"$
+
+    # A full upgrade can pull a new kernel. Without a reboot the running kernel
+    # and the upgraded userspace mismatch — on Arch this breaks nftables (cache
+    # initialization failed), which is the firewall driver netavark programs.
+    - name: Reboot after a system upgrade
+      when: >-
+        (prepare_upgrade.changed | default(false)) or
+        (prepare_upgrade_arch.changed | default(false))
+      ansible.builtin.reboot:

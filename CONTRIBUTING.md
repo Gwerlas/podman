@@ -56,6 +56,13 @@ playbooks that every scenario points at through `provisioner.playbooks`.
 Molecule ignores that directory as a scenario because it carries no
 `molecule.yml`.
 
+`prepare.yml` stays minimal on purpose : it upgrades the system, enables the
+Gentoo binhost, reboots when a new kernel came, and stops there. Nothing
+converges `gwerlas.system` — this role only imports its user management — so a
+converge exercises Podman on a stock cloud image, which is the point. What a
+platform needs beyond that baseline is a gap in the role, not something prepare
+should paper over.
+
 ### Distribution defaults
 
 You can define some defaults if the distribution packages do not work out of
