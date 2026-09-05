@@ -214,6 +214,31 @@ molecule login -h <instance_name>
 molecule verify
 ```
 
+Editing tasks
+-------------
+
+`yamllint` and `ansible-lint` leave two habits to the author, both about how a
+value is written rather than what it means.
+
+**A scalar wherever the module coerces one.** A parameter declared
+`type: list, elements: str` accepts a bare string and wraps it itself, so a
+single value is written as one:
+
+```yaml
+community.general.portage:
+  package: app-containers/podman
+```
+
+The list-of-one form reads as a multi-package call nobody trimmed.
+
+**Quotes only where YAML needs them.** `app-containers/podman`, `~amd64`,
+`podman` and file paths are plain scalars and stay bare. Quote when the parser
+would otherwise take the value for something else: a string shaped like a
+boolean or a number (`"yes"`, `"123"`), a value opening on `%`, `*`, `&`, `?`
+or `:`, one holding a `#` or a colon followed by a space, and a Jinja
+expression that starts the value — `"{{ var }}"`, which YAML reads as a flow
+mapping without them.
+
 Editing templates
 -----------------
 
