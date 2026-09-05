@@ -9,6 +9,36 @@
   when: task_file is file
   ansible.builtin.include_tasks: "{{ task_file }}"
 
+# podman-compose is not in the Enterprise Linux base repositories : it ships in
+# EPEL, and which repositories a host trusts is the operator's call, not this
+# role's. Say that, rather than let the package manager stop on "No package
+# available" naming a package the user never spelled out.
+- name: Packages - Compose on Enterprise Linux
+  when:
+    - podman_compose_install | bool
+    - ansible_facts.os_family == "RedHat"
+    - "'compose' in packages"
+  block:
+    # `list`, not `list --available` : the latter finds nothing once the
+    # package is installed, and every converge after the first would fail.
+    - name: Packages - Look for the compose packages
+      become: true
+      check_mode: false
+      changed_when: false
+      failed_when: false
+      ansible.builtin.command:
+        cmd: dnf list {{ packages.compose | join(' ') }}
+      register: podman_compose_lookup
+
+    - name: Packages - Refuse a compose package no repository provides
+      when: podman_compose_lookup.rc != 0
+      ansible.builtin.fail:
+        msg: >-
+          {{ packages.compose | join(', ') }} is in none of the enabled
+          repositories. On Enterprise Linux it comes from EPEL, which this role
+          does not enable for You : install epel-release, or set
+          podman_compose_install to false.
+
 - name: Packages
   become: true
   ansible.builtin.package:

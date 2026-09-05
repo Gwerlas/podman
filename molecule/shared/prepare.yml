@@ -20,6 +20,17 @@
       ansible.builtin.dnf:
         update_cache: true
 
+    # podman-compose lives in EPEL on Enterprise Linux, and the role refuses to
+    # enable a third-party repository on an operator's behalf. Providing one is
+    # host policy, which here is the test baseline's job. Fedora carries the
+    # package itself and has no epel-release to install.
+    - name: Enable EPEL on Enterprise Linux
+      when:
+        - ansible_facts.os_family == "RedHat"
+        - ansible_facts.distribution != "Fedora"
+      ansible.builtin.dnf:
+        name: epel-release
+
     - name: Upgrade Arch Linux
       when: ansible_facts.os_family == "Archlinux"
       community.general.pacman:

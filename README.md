@@ -330,6 +330,11 @@ whether a given option is actually wired up for your distribution.
 The `podman_compose_install` set to `true` will install `podman-compose` if it
 is available for the distribution of the targetted host.
 
+On Enterprise Linux that package comes from EPEL, and We do not enable a
+third-party repository on your hosts : install `epel-release` yourself, or the
+role stops with a message telling You so. Fedora ships the package in its own
+repositories, and needs nothing.
+
 ### Podman toolbox
 
 The `podman_toolbox_install` set to `true` will install `podman-toolbox` if it
