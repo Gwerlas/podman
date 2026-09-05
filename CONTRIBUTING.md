@@ -28,17 +28,28 @@ contributor who has not installed it.
 Adding a new distribution or version
 ------------------------------------
 
-The platforms the scenarios boot are catalogued in
-[`molecule/shared/platforms.yml`](molecule/shared/platforms.yml), which holds
-one cloud image URL per platform — or an `image_latest` pointer for a rolling
-release, resolved at runtime by `create.yml`. Each scenario's `molecule.yml`
-then picks a subset by name, with its own `groups` / `memory` / `vcpus`
-overrides.
+The list of officially supported platforms lives in
+[`molecule/shared/platforms.yml`](molecule/shared/platforms.yml). It is the
+single source of truth for both Molecule (one cloud image URL per platform — or
+an `image_latest` pointer for a rolling release, resolved at runtime by
+`create.yml`) and Galaxy (`galaxy_info.platforms` in `meta/main.yml`).
 
-`meta/main.yml` carries the same list for Galaxy, under
-`galaxy_info.platforms`. Nothing keeps the two in step, so update both by hand
-and keep them in agreement : a platform is only really supported once it passes
-the scenarios *and* is declared to Galaxy.
+After editing it, run the sync script to refresh `meta/main.yml` :
+
+```sh
+python3 scripts/sync-meta-platforms.py
+```
+
+Each scenario's `molecule.yml` then picks a subset by name, with its own
+`groups` / `memory` / `vcpus` overrides. Two scenarios wanting the same subset
+share one file rather than repeating it — `service` links its `molecule.yml` to
+`default`'s, and what makes the scenario itself is said in its `converge.yml`.
+Break the link the day the lists have to differ, not before.
+
+Supported does not mean current : a platform stays in the list as long as we
+can still test it, whatever its upstream end of life. What we cannot do is
+guarantee one whose packages are no longer reachable, and that is where an
+entry leaves both files at once.
 
 `molecule/shared/` also hosts the `create.yml`, `destroy.yml` and `prepare.yml`
 playbooks that every scenario points at through `provisioner.playbooks`.
