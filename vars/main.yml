@@ -6,10 +6,17 @@ packages:
     - podman-docker
   podman:
     - podman
+  # Not something Podman needs : the role reaches a container's owner through
+  # become_user, and Ansible hands its temporary files over with setfacl —
+  # "you should be able to use ... POSIX.1e filesystem acls".
+  # https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_privilege_escalation.html#risks-of-becoming-an-unprivileged-user
+  rootless:
+    - acl
 
 packages_computed: |
   {{
     packages.podman +
+    ((podman_users | length > 0 and 'rootless' in packages) | ternary(packages.rootless, [])) +
     ((podman_compose_install and 'compose' in packages) | ternary(packages.compose, [])) +
     ((podman_mimic_docker and 'docker' in packages) | ternary(packages.docker, [])) +
     ((podman_toolbox_install and 'toolbox' in packages) | ternary(packages.toolbox, [])) |

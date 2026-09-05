@@ -6,6 +6,8 @@ packages:
   podman:
     - app-containers/buildah
     - app-containers/podman
+  rootless:
+    - sys-apps/acl
 
 default_registries_config:
   unqualified-search-registries:

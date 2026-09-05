@@ -9,3 +9,5 @@ packages:
     - podman
   toolbox:
     - podman-toolbox
+  rootless:
+    - acl

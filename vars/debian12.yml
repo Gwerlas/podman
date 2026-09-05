@@ -11,3 +11,5 @@ packages:
     - slirp4netns
   toolbox:
     - podman-toolbox
+  rootless:
+    - acl

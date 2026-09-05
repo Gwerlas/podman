@@ -5,6 +5,8 @@ packages:
     - fuse-overlayfs
     - rootlesskit
     - podman
+  rootless:
+    - acl
 
 default_containers_config:
   containers:

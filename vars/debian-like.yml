@@ -13,3 +13,5 @@ packages:
     - uidmap
   toolbox:
     - podman-toolbox
+  rootless:
+    - acl

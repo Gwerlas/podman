@@ -2,6 +2,8 @@
 packages:
   podman:
     - podman
+  rootless:
+    - acl
 
 sysctl:
   - name: user.max_user_namespaces

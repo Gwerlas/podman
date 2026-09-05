@@ -11,3 +11,5 @@ packages:
     - netavark
     - passt
     - podman
+  rootless:
+    - acl
