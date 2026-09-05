@@ -134,6 +134,24 @@ podman_users:
     subgid_length: 50000  # Same as subuid_length by default
 ```
 
+`subuid_*` and `subgid_*` are this role's own. Every other key goes to
+`gwerlas.system`, which creates the user, so an entry takes anything the
+[`ansible.builtin.user`][user module] module takes — `shell`, `groups`,
+`password_lock`, `system`, `state` — plus `authorized_keys` :
+
+```yaml
+podman_users:
+  - name: nginx
+    system: true
+    uid: 300
+    shell: /usr/bin/nologin
+    password_lock: true
+    home: /data/web
+    create_home: false
+```
+
+[user module]: https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html
+
 Because podman store its data in the user's home directory, we will
 create it if missing.
 
@@ -161,6 +179,14 @@ For users that doesn't yet exist, we will create them for You through the
 
 To disable missing user creation, set `podman_create_missing_users` to `false`.
 In this case, You have to set the `uid` property for each missing users.
+
+#### Containers running at boot
+
+Declaring a user `system: true` also enables systemd lingering for it, so its
+user instance starts with the machine. The rootless units generated for
+`podman_containers` need it : without lingering they only run while that user
+has a session open, and `enabled: true` on a container means "until they log
+out".
 
 ### Podman configuration
 
