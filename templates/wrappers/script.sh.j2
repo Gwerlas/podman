@@ -1,6 +1,6 @@
 # Ansible managed - do not edit
 
-{% set data = podman_wrappers_values | combine(wrapper)%}
+{% set data = podman_wrappers_values | combine(wrapper) %}
 {% set wrapper = data %}
 {% if not wrapper.can_extends | default(false) %}
 # Reset options to prevent user's customizations
@@ -56,7 +56,7 @@ CONTAINER_OPTS="$CONTAINER_OPTS -v $XDG_RUNTIME_DIR/podman/podman.sock:/run/podm
 for envvar in $(env | grep '{{ pattern }}' | cut -d= -f1); do
   CONTAINER_OPTS="$CONTAINER_OPTS -e $envvar"
 done
-{% endfor%}
+{% endfor %}
 {% endif %}
 
 {% if wrapper.wrapper_extras.openstack_cli | default(false) %}

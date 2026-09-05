@@ -40,7 +40,7 @@
 {{ key }} = {{ value }}
 {% endif %}
 {% endfor %}
-{% if registry.mirror is defined and registry.mirror|length > 0 %}
+{% if registry.mirror is defined and registry.mirror | length > 0 %}
 {% for mirror in registry.mirror %}
 [[registry.mirror]]
 {% for key, value in registry.mirror.items() %}

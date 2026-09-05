@@ -48,7 +48,7 @@ workflow:
 # CONTRIBUTING.md says what that leaves uncovered.
 #
 # Every YAML the role is made of. `templates/` is absent on purpose:
-# ansible-lint does not read `.j2` files, so nothing here covers them.
+# ansible-lint does not read `.j2` files, which is what the j2lint job is for.
 ansible-lint:
   image: gwerlas/ansible-lint
   rules:
@@ -65,6 +65,30 @@ ansible-lint:
           - tasks/**/*
           - vars/**/*
   script: ansible-lint
+
+# ansible-lint never reads .j2 files, so a template broken at the syntax level
+# would otherwise ship through a green pipeline. j2lint publishes no image,
+# hence the install here; `changes` keeps that cost on the pipelines that touch
+# a template.
+#
+# Two rules are ignored wholesale. jinja-statements-indentation expects nested
+# `{% %}` to be indented, which reshapes every config template for no gain here.
+# jinja-statements-delimiter forbids the `{%-` / `-%}` whitespace control these
+# templates are built on: a config file is line-oriented, and a block that
+# leaves its own newline behind renders a blank line the file cannot carry.
+j2lint:
+  image: python:3.13-slim
+  rules:
+    - *on-default-branch
+    - changes:
+        compare_to: refs/heads/main
+        paths:
+          - .gitlab-ci.yml
+          - templates/**/*.j2
+  before_script:
+    - pip install --quiet j2lint==1.3.0
+  script:
+    - j2lint templates/ --ignore jinja-statements-indentation jinja-statements-delimiter
 
 import:
   stage: deploy

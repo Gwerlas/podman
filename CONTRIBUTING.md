@@ -217,14 +217,22 @@ molecule verify
 Editing templates
 -----------------
 
-Nothing renders the templates automatically : `ansible-lint` does not read
-`.j2` files, and no CI job covers them. A template change is therefore only
-proven by running the scenario that uses it — `mimic-docker` for
-`portage.use.j2`, `default` for the `containers.conf` / `registries.conf` /
-`storage.conf` family — or by rendering it by hand.
+`ansible-lint` does not read `.j2` files, so a template broken at the syntax
+level would ship through a green pipeline. The `j2lint` job covers that, and
+only runs when a template changes. To reproduce it locally :
 
-So review a template change by looking at what it produces, not by trusting the
-pipeline.
+```sh
+pip install j2lint==1.3.0
+j2lint templates/ --ignore jinja-statements-indentation jinja-statements-delimiter
+```
+
+Both ignored rules are explained in `.gitlab-ci.yml`, next to the job.
+
+Linting only proves a template *compiles*. Whether it renders the right thing
+is covered by the scenario that uses it — `mimic-docker` for `portage.use.j2`,
+`default` for the `containers.conf` / `registries.conf` / `storage.conf`
+family — and those need a workstation. So review a template change by looking
+at what it produces, not by trusting the pipeline.
 
 Editing documentation
 ---------------------
