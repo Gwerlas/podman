@@ -51,9 +51,9 @@ Be sure to have it installed :
 ansible-galaxy install gwerlas.system
 ```
 
-It is not a dependency of this role : we never converge it for You, we only
-import its user management tasks when we have a missing user to create. Your
-nodes get Podman, nothing else.
+It has to be installed, but this role never converges it : we only import its
+user management tasks, and only when there is a missing user to create. Your
+nodes get Podman and what this role needs to set it up, nothing else.
 
 If You want it, play it yourself, it may help You to prepare your node :
 
@@ -172,8 +172,9 @@ To use a customized configuration, use `podman_*_config` settings.
 
 #### Containers
 
-Use the `podman_containers_config` dictionary to populate the `/etc/containers/containers.conf`
-file following the same structure as the toml described in [`containers.conf`][] man page.
+Use the `podman_containers_config` dictionary to populate the
+`/etc/containers/containers.conf` file following the same structure as the toml
+described in [`containers.conf`][] man page.
 
 [`containers.conf`]: https://man.archlinux.org/man/containers.conf.5.en
 
@@ -197,14 +198,16 @@ log_drivers = "journald"
 cgroup_manager = "cgroupfs"
 ```
 
-For Debian 11 only, we overwrite the distribution defaults by the configuration above.
+For Debian 11 only, we overwrite the distribution defaults by the
+configuration above.
 
 #### Registries
 
 **NOTE** We do not support the deprecated version 1 format.
 
-Use the `podman_registries_config` dictionary to populate the `/etc/containers/registries.conf`
-file following the same structure as the toml described in [`registries.conf`][] man page.
+Use the `podman_registries_config` dictionary to populate the
+`/etc/containers/registries.conf` file following the same structure as the toml
+described in [`registries.conf`][] man page.
 
 [`registries.conf`]: https://man.archlinux.org/man/containers-registries.conf.5
 
@@ -231,8 +234,9 @@ insecure = true
 
 #### Storage
 
-Use the `podman_storage_config` dictionary to populate the `/etc/containers/storage.conf`
-file following the same structure as the toml described in [`storage.conf`][] man page.
+Use the `podman_storage_config` dictionary to populate the
+`/etc/containers/storage.conf` file following the same structure as the toml
+described in [`storage.conf`][] man page.
 
 [`storage.conf`]: https://github.com/containers/storage/blob/main/docs/containers-storage.conf.5.md
 
@@ -256,10 +260,12 @@ driver = "zfs"
 [storage.options.zfs]
 mountopt = "nodev"
 ```
+
 #### Libpod
 
-Use the `podman_libpod_config` dictionary to populate the `/etc/containers/libpod.conf`
-file following the same structure as the toml described in [`libpod.conf`][] man page.
+Use the `podman_libpod_config` dictionary to populate the
+`/etc/containers/libpod.conf` file following the same structure as the toml
+described in [`libpod.conf`][] man page.
 
 [`libpod.conf`]: https://manpages.debian.org/unstable/podman/libpod.conf.5.en.html
 
@@ -276,7 +282,8 @@ Will generate the `/etc/containers/libpod.conf` bellow :
 cgroup_manager = "cgroupfs"
 ```
 
-For Debian 11 only, we overwrite the distribution defaults by the configuration above.
+For Debian 11 only, we overwrite the distribution defaults by the
+configuration above.
 
 ### Optional features
 
@@ -294,21 +301,21 @@ whether a given option is actually wired up for your distribution.
 
 ### Podman compose
 
-The `podman_compose_install` set to `true` will install `podman-compose` if it is available
-for the distribution of the targetted host.
+The `podman_compose_install` set to `true` will install `podman-compose` if it
+is available for the distribution of the targetted host.
 
 ### Podman toolbox
 
-The `podman_toolbox_install` set to `true` will install `podman-toolbox` if it is available
-for the distribution of the targetted host.
+The `podman_toolbox_install` set to `true` will install `podman-toolbox` if it
+is available for the distribution of the targetted host.
 
 ### Mimic Docker
 
 #### Docker in the $PATH
 
-You can mimic Docker throw the `podman_mimic_docker` parameter set to `true`. A `docker`
-command is then provided in the `$PATH`, by the most native mean available on the target
-Linux distribution :
+You can mimic Docker throw the `podman_mimic_docker` parameter set to `true`. A
+`docker` command is then provided in the `$PATH`, by the most native mean
+available on the target Linux distribution :
 
 | Distribution                   | Provided by                                       |
 | ------------------------------ | ------------------------------------------------- |
@@ -318,17 +325,20 @@ Linux distribution :
 
 So the scripts calling `docker` will transparently use `podman` instead, or almost.
 
-`docker compose` follows, as long as `podman_compose_install` is set to `true` and the
-installed Podman is `4.7` or upper, which routes it to `podman-compose` by itself.
+`docker compose` follows, as long as `podman_compose_install` is set to `true`
+and the installed Podman is `4.7` or upper, which routes it to `podman-compose`
+by itself.
 
-If a **real** Docker is already installed on the target host, the role fails instead of
-overwriting its `docker` command : remove Docker, or set `podman_mimic_docker` to `false`.
+If a **real** Docker is already installed on the target host, the role fails
+instead of overwriting its `docker` command : remove Docker, or set
+`podman_mimic_docker` to `false`.
 
 #### Daemon socket
 
-If the installed version of Podman is `3.0` or upper, the service will be enabled for each
-`podman_users` and the environment variables `DOCKER_BUILDKIT` and `DOCKER_HOST` will be
-respectively set to `0` and `$XDG_RUNTIME_DIR/podman/podman.sock`.
+If the installed version of Podman is `3.0` or upper, the service will be
+enabled for each `podman_users` and the environment variables `DOCKER_BUILDKIT`
+and `DOCKER_HOST` will be respectively set to `0` and
+`$XDG_RUNTIME_DIR/podman/podman.sock`.
 
 So you will be able to run Docker in Podman.
 
@@ -377,16 +387,6 @@ You can add (or remove) the supported parameters list editing the
 `podman_wrappers_autofill` variable. You also can editing the default values
 editing the `podman_wrappers_values` variable.
 
-Dependencies
-------------
-
-The `gwerlas.system` role for user management : it has to be installed, but
-this role does not converge it. Only its `users` tasks are imported, and only
-when there is a missing user to create.
-
-Be sure to have the `containers.podman` installad on your system, or present
-in your `requirements.yml`.
-
 Example Playbook
 ----------------
 
@@ -407,4 +407,3 @@ License
 -------
 
 [BSD 3-Clause License](LICENSE).
-

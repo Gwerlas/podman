@@ -239,12 +239,30 @@ Editing documentation
 
 ### Markdown conventions
 
-Setext headings for levels 1 and 2 (`===` and `---`), dashes for bullets, 80
-columns for prose. Tables and code blocks are exempt from the column limit.
+`markdownlint` checks every `*.md`. The conventions this role follows — setext
+headings for levels 1 and 2, dashes for bullets, 80 columns for prose with
+tables and code blocks exempt — are recorded, with their rationale, in
+`.markdownlint.yaml`. To run it locally :
+
+```sh
+markdownlint-cli2 "**/*.md" "!.ansible"
+```
+
+The `!.ansible` is for local runs only : `ansible-galaxy install` drops
+`gwerlas.system` there, and its documentation is not ours to lint. A CI job
+starts from a fresh clone and has no such directory.
+
+It fixes much of what it finds on its own with `--fix` — bullets, indentation,
+blank lines, bare URLs. What it cannot fix is line length, which is on you.
+
+A line whose overflow contains no space is not reported : a long URL or a
+reference-style link definition has nothing to wrap on. That is also the way
+out when a link makes a sentence overflow — move the URL to a `[name]:`
+definition at the end of the file rather than splitting the link across two
+lines.
+
 Pad table cells so the borders line up, and size each separator row to its
 column.
-
-No Markdown linter is configured in this repository, so these are on you.
 
 ### Where a rationale lives
 
