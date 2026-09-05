@@ -291,33 +291,69 @@ column.
 
 ### Where a rationale lives
 
-A reason is written in exactly one place. From the narrowest home to the
-widest :
+Every artifact starts empty : a sentence earns its place when its absence would
+cost the reader something precise, not when a home can be found for it. A
+reason then lives in exactly one of these, the others pointing at it :
 
-| Home                     | What it holds                                         |
-| ------------------------ | ----------------------------------------------------- |
-| Code comment             | what this line does, and under which rule             |
-| `CONTRIBUTING` / `docs/` | what the reader has to be able to predict or do       |
-| Commit message           | what changes, and why now                             |
-| Issue / merge request    | the derivation, the measurements, the paths not taken |
-| Upstream documentation   | the rule itself, whenever the rule is not ours        |
+| Home                     | What it holds                                       |
+| ------------------------ | --------------------------------------------------- |
+| Code comment             | what this line does, and under which rule           |
+| `CONTRIBUTING` / `README`| what the reader has to be able to predict or do     |
+| Commit message           | what changes, and why it is right                   |
+| Issue / merge request    | how we know: what was run, measured, tried, dropped |
+| Upstream documentation   | the rule itself, whenever the rule is not ours      |
 
-Two of those are easy to get wrong, and both make comments longer than they
-need to be.
+Write in that order, narrowest first. A merge request is written **against**
+its commits, not from the same head of context : after one opening sentence
+naming what it does, it holds only what the diff and the commit messages do not
+already say. A one-line pointer beats a restatement every time.
+
+Two boundaries, two tests, both by deletion.
+
+**A comment summarises, it does not narrate.** Remove everything written in the
+past tense — when it was observed, what was measured, which false trail was
+followed. What is left is the rule.
+
+**A commit is knowable without running anything.** Remove from the merge
+request every sentence that would already be true had the work never run : it
+belongs to the commit. Remove from the commit every sentence that only became
+true by running something : it belongs to the merge request.
 
 **Cite upstream, never re-derive it.** When the reason is a third-party tool's
-behaviour — Portage, apt, systemd, Podman, Jinja — the rule already has a home,
-and it is not this repository. Quote one sentence, give the URL, stop. A
-reconstruction of your own goes stale without warning the day upstream changes
-its mind, and it reads as an opinion of this role when it is in fact an
-external constraint.
-
-**A comment summarises, it does not narrate.** It says what the line does and
-under which rule. The investigation that led there — when it was observed, what
-was measured, which false trail was followed — belongs to the issue and the
-commit message, where someone doing archaeology will go looking for it.
+behaviour — Portage, apt, systemd, Podman, Jinja — quote one sentence, give the
+URL, stop. A reconstruction of your own goes stale the day upstream changes its
+mind, and reads as this role's opinion when it is an external constraint.
 
 Submit your changes
 -------------------
 
 Merge request in Gitlab.
+
+Everything that lands in the repository or in GitLab is written in English —
+code, comments, commit messages, `README.md`, this file, and the title and body
+of every issue and merge request. A conversation held in another language stops
+at the artifact.
+
+A change comes with its tests and its documentation, in the same commit. A new
+variable, or a change in behaviour, is not finished until :
+
+- a molecule scenario exercises it — an existing one where it fits,
+  `mimic-docker` for anything about the `docker` command, `service` for the
+  rootless units, `default` for the role's own defaults;
+- the user-facing half is written in `README.md` : what the variable does, its
+  default, an example;
+- the reasoning a future maintainer will need — an upstream constraint, a
+  Portage quirk, why two tasks must run in that order — goes in a code comment
+  or in this file, not in the user documentation.
+
+Keeping the three together is what makes a commit reviewable on its own : a
+change that arrives without its test looks finished when it is not, and one
+that arrives without its reason forces the next reader to guess.
+
+The issue is referenced from the commit body, and only from there. `Closes #3`
+if the commit settles the whole ticket; `Relates to #3` if it settles one of
+the three things the ticket asks for, so the other two stay visible. Never the
+bare number on a line of its own : git strips a line opening on `#` as a
+comment whenever the message goes through an editor, and the reference vanishes
+without a word. `README.md` never carries an issue number — a user can do
+nothing with it, and it goes stale the day the issue closes.
