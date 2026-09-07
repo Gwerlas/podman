@@ -2,6 +2,23 @@
 - name: Verify that myapp user can run a container
   hosts: all
   tasks:
+    - name: Read the rendered storage configuration
+      become: true
+      ansible.builtin.slurp:
+        src: /etc/containers/storage.conf
+      register: storage_conf
+
+    - name: Check the driver section landed, and no empty table with it
+      vars:
+        lines: "{{ (storage_conf.content | b64decode).split('\n') }}"
+      ansible.builtin.assert:
+        that:
+          - "'[storage.options.overlay]' in lines"
+          - "'mountopt = \"nodev\"' in lines"
+          - "'[storage]' not in lines"
+          - "'[storage.options]' not in lines"
+        fail_msg: "rendered : {{ lines }}"
+
     - name: Hello world
       become: true
       become_user: myapp

@@ -5,6 +5,13 @@
 - name: Converge
   hosts: all
   vars:
+    # Nothing else renders storage.conf, and a template no scenario reaches is
+    # a template that breaks unnoticed.
+    podman_storage_config:
+      storage:
+        options:
+          overlay:
+            mountopt: nodev
     podman_retries: 10
     podman_delay: 3
     podman_users:

@@ -1,45 +1,53 @@
 # Ansible managed - do not edit
 {% if podman_storage_defaults is defined -%}
-    {%- set defaults = podman_storage_defaults -%} 
-{%- else -%} 
-    {%- set defaults = {} -%} 
-{%- endif -%} 
+    {%- set defaults = podman_storage_defaults -%}
+{%- else -%}
+    {%- set defaults = {} -%}
+{%- endif -%}
 
 {%- if podman_storage_config is defined -%}
-    {%- set config = podman_storage_config -%} 
-{%- else -%} 
-    {%- set config = {} -%} 
-{%- endif -%} 
+    {%- set config = podman_storage_config -%}
+{%- else -%}
+    {%- set config = {} -%}
+{%- endif -%}
 
-{%- set data = defaults | combine(config) %} 
+{%- set data = defaults | combine(config) -%}
+{#- The driver sections of [storage.options], rendered on their own below
+    rather than as keys of the table that holds them. -#}
+{%- set sections = ['aufs', 'btrfs', 'thinpool', 'overlay', 'vfs', 'zfs'] -%}
+{#- A table is written only when it holds a key of its own. An empty [storage]
+    is not harmless : podman warns that no driver is set and picks one itself. -#}
+{%- set storage_keys = data.storage | default({}) | reject('eq', 'options') | list -%}
+{%- set option_keys = data.storage.options | default({}) | reject('in', sections) | list -%}
+{%- set driver_sections = sections | select('in', data.storage.options | default({})) | list %}
+{% if storage_keys %}
 
-{% if data.storage is defined %}
 [storage]
-{% for key, value in data.storage.items() %}
-{% if value is string %}
-{{ key }} = "{{ value }}"
-{% elif value is boolean %}
-{{ key }} = {{ value | lower }}
-{% elif key != "options" %}
-{{ key }} = {{ value }}
-{% endif %}
-{% endfor %} 
-
-{% if data.storage.options is defined %}
-[storage.options]
-{% for key, value in data.storage.options.items() %}
-{% if value is string %}
-{{ key }} = "{{ value }}"
-{% elif value is boolean %}
-{{ key }} = {{ value | lower }}
-{% elif key not in sections %}
-{{ key }} = {{ value }}
+{% for key in storage_keys %}
+{% if data.storage[key] is string %}
+{{ key }} = "{{ data.storage[key] }}"
+{% elif data.storage[key] is boolean %}
+{{ key }} = {{ data.storage[key] | lower }}
+{% else %}
+{{ key }} = {{ data.storage[key] }}
 {% endif %}
 {% endfor %}
+{% endif %}
+{% if option_keys %}
 
-{%- set sections = ['aufs', 'btrfs', 'thinpool', 'overlay', 'vfs', 'zfs'] -%}
-{% for section in sections %}
-{% if data.storage.options[section] is defined %}
+[storage.options]
+{% for key in option_keys %}
+{% if data.storage.options[key] is string %}
+{{ key }} = "{{ data.storage.options[key] }}"
+{% elif data.storage.options[key] is boolean %}
+{{ key }} = {{ data.storage.options[key] | lower }}
+{% else %}
+{{ key }} = {{ data.storage.options[key] }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% for section in driver_sections %}
+
 [storage.options.{{ section }}]
 {% for key, value in data.storage.options[section].items() %}
 {% if value is string %}
@@ -49,9 +57,5 @@
 {% else %}
 {{ key }} = {{ value }}
 {% endif %}
-{% endfor %} 
-
-{% endif %} 
 {% endfor %}
-{% endif %} 
-{% endif %}
+{% endfor %}
