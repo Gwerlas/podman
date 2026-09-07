@@ -2,6 +2,36 @@
 - name: Verify that myapp user can run a container
   hosts: all
   tasks:
+    # nginx keeps its home in /data/web, so its store sits off the default
+    # path and gets a rule of its own. The home is not ours to label : it is a
+    # service's state directory, and it must come out of a converge untouched.
+    - name: Read the SELinux context of the container store
+      when: ansible_facts.selinux.status | default('disabled') == 'enabled'
+      become: true
+      ansible.builtin.stat:
+        path: /data/web/.local/share/containers/storage
+        get_selinux_context: true
+      register: rootless_store
+
+    - name: Read the SELinux context of the home
+      when: ansible_facts.selinux.status | default('disabled') == 'enabled'
+      become: true
+      ansible.builtin.stat:
+        path: /data/web
+        get_selinux_context: true
+      register: rootless_home
+
+    # selinux_context is [user, role, type, range] ; the type is what decides.
+    - name: Check the store is labelled and the home is left alone
+      when: ansible_facts.selinux.status | default('disabled') == 'enabled'
+      ansible.builtin.assert:
+        that:
+          - rootless_store.stat.selinux_context[2] == "data_home_t"
+          - rootless_home.stat.selinux_context[2] == "default_t"
+        fail_msg: >-
+          store={{ rootless_store.stat.selinux_context | default('?') }}
+          home={{ rootless_home.stat.selinux_context | default('?') }}
+
     - name: Read the rendered storage configuration
       become: true
       ansible.builtin.slurp:

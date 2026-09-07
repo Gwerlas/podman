@@ -12,3 +12,5 @@ packages:
     - toolbox
   rootless:
     - acl
+  selinux:
+    - policycoreutils-python-utils

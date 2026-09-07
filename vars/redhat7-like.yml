@@ -4,6 +4,8 @@ packages:
     - podman
   rootless:
     - acl
+  selinux:
+    - policycoreutils-python-utils
 
 sysctl:
   - name: user.max_user_namespaces

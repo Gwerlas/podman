@@ -1,0 +1,95 @@
+---
+# What needs a context from us is the container store, not the home : podman
+# labels the layers container_file_t itself, and asks of its graphroot only that
+# it not be default_t, where a container cannot map its own libc. Where that
+# graphroot sits depends on the host — an operator moves it with
+# podman_storage_config — so ask podman rather than guess.
+- name: Rootless - Locate the container store
+  when: podman_labels_store | bool
+  become: true
+  become_user: "{{ user.name }}"
+  vars:
+    default_home: "{{ user.home | default('/home/' + user.name) }}"
+  # HOME, because that is where podman reads the configuration naming its
+  # store. Not XDG_RUNTIME_DIR : a query needs no runtime directory, and naming
+  # one that does not exist — a user without linger has none — makes it fail.
+  environment:
+    HOME: "{{ ansible_facts['getent_passwd'][user.name].4 | default(default_home) }}"
+  containers.podman.podman_system_info:
+  register: podman_graphroots
+  loop: "{{ podman_users }}"
+  loop_control:
+    loop_var: user
+    label: "{{ user.name }}"
+
+# The store has to exist before it can be relabelled. A directory takes its
+# label from a type transition off its parent at creation ; the context rules
+# are only ever read afterwards, by restorecon and friends, in userspace. Left
+# to podman, the store would be born default_t and the rule would arrive too
+# late.
+- name: Rootless - Create a container store kept outside /home
+  when:
+    - graphroot | length > 0
+    - graphroot != labelled_reference
+  become: true
+  vars:
+    graphroot: "{{ found.podman_system_info.store.graphRoot | default('') }}"
+    labelled_reference: /home/{{ found.user.name }}/.local/share/containers/storage
+  ansible.builtin.file:
+    path: "{{ graphroot }}"
+    state: directory
+    owner: "{{ found.user.name }}"
+    mode: "0700"
+  loop: "{{ podman_graphroots.results | default([]) }}"
+  loop_control:
+    loop_var: found
+    label: "{{ found.user.name }}"
+  register: podman_store_dirs
+
+# The reference is a path under /home, the home root the SELinux policy carries
+# its user_home rules for — never the user's real home, which is the very path
+# that has none. It does not have to exist : semanage matches path patterns,
+# not inodes, and /home/<name> is a pattern here rather than a directory.
+# An equivalence, not a type : a type put on by chcon or `file: setype=` is
+# lifted again by the next restorecon, because no rule covers the path. The
+# equivalence is the rule, so it survives a relabel — and podman's own layers
+# survive it too, container_ro_file_t being a customizable type restorecon
+# leaves alone.
+# Never the home itself : that directory belongs to whoever chose it, and its
+# context is theirs to set.
+- name: Rootless - Declare a container store kept outside /home
+  when:
+    - graphroot | length > 0
+    - graphroot != labelled_reference
+  become: true
+  vars:
+    graphroot: "{{ found.podman_system_info.store.graphRoot | default('') }}"
+    labelled_reference: /home/{{ found.user.name }}/.local/share/containers/storage
+  community.general.sefcontext:
+    target: "{{ graphroot }}"
+    substitute: "{{ labelled_reference }}"
+    state: present
+  loop: "{{ podman_graphroots.results | default([]) }}"
+  loop_control:
+    loop_var: found
+    label: "{{ found.user.name }}"
+  register: podman_store_contexts
+
+# The rule does not reach back over what already exists, so the relabel runs
+# whenever either half was just put in place.
+# Not a handler : those run at the end of the play, and the store is filled
+# before that, by the provisioning tasks this one has to precede.
+- name: Rootless - Relabel a container store kept outside /home  # noqa no-handler
+  when: context.changed or podman_store_dirs.results[index].changed | default(false)
+  become: true
+  ansible.builtin.command:
+    argv:
+      - restorecon
+      - -R
+      - "{{ context.found.podman_system_info.store.graphRoot }}"
+  changed_when: true
+  loop: "{{ podman_store_contexts.results | default([]) }}"
+  loop_control:
+    loop_var: context
+    index_var: index
+    label: "{{ context.found.user.name }}"

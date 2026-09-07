@@ -8,6 +8,8 @@ packages:
     - app-containers/podman
   rootless:
     - sys-apps/acl
+  selinux:
+    - sys-apps/policycoreutils
 
 default_registries_config:
   unqualified-search-registries:

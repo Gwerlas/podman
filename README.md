@@ -155,6 +155,13 @@ podman_users:
 Because podman store its data in the user's home directory, we will
 create it if missing.
 
+On a host enforcing SELinux, a container store landing outside `/home` — a
+`home` of its own, or a `graphroot` named in `podman_storage_config` — is
+declared equivalent to the path it would have under `/home`, and relabelled, so
+the system reads it as the store it is. Without that, the containers We
+provision for that user cannot start. The home itself is never touched : its
+context is yours to set.
+
 You can add users quickly calling the `rootless` task alone :
 
 ```yaml

@@ -16,3 +16,9 @@
 
 - name: Rootless - Subuid and Subgid files
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/rootless/subids.yml"
+
+# After the subids, never before : the first podman command a user runs settles
+# the id mapping of their namespace, and one settled without those files leaves
+# every later pull failing on "insufficient UIDs or GIDs".
+- name: Rootless - Container store
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/rootless/store.yml"

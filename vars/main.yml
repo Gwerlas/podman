@@ -12,11 +12,17 @@ packages:
   # https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_privilege_escalation.html#risks-of-becoming-an-unprivileged-user
   rootless:
     - acl
+  # semanage, for the file context rule a store kept off its default path needs.
+  # Declared only by the distributions that ship SELinux, and named as each
+  # packages it.
+  selinux: []
 
 packages_computed: |
   {{
     packages.podman +
     ((podman_users | length > 0 and 'rootless' in packages) | ternary(packages.rootless, [])) +
+    ((podman_labels_store | default(false) | bool and 'selinux' in packages)
+     | ternary(packages.selinux, [])) +
     ((podman_compose_install and 'compose' in packages) | ternary(packages.compose, [])) +
     ((podman_mimic_docker and 'docker' in packages) | ternary(packages.docker, [])) +
     ((podman_toolbox_install and 'toolbox' in packages) | ternary(packages.toolbox, [])) |

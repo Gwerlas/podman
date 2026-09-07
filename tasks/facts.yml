@@ -16,6 +16,18 @@
   loop_control:
     loop_var: vars_file
 
+# Only the container store needs a context from us : podman labels the layers
+# container_file_t itself, and asks of its graphroot only that it not be
+# default_t, where a container cannot map its own libc. Which directory that is
+# depends on the host, so the task asks podman rather than guessing.
+- name: Facts - SELinux is enforced
+  ansible.builtin.set_fact:
+    podman_labels_store: >-
+      {{
+        ansible_facts.selinux.status | default('disabled') == 'enabled'
+        and podman_users | length > 0
+      }}
+
 - name: Get the version of podman
   ansible.builtin.command:
     cmd: podman --version
