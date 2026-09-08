@@ -13,8 +13,9 @@ platforms:
   # Debian — stable, oldstable, and oldoldstable while it lives
   # bullseye is the only supported platform without a podman-docker package,
   # so it is the only one exercising the docker symlink of mimic-docker.
-  # Drop it, along with vars/debian11.yml, once its packages stop being
-  # reachable.
+  # Archived since its end of life : prepare.yml points it at
+  # archive.debian.org. Drop it, along with vars/debian11.yml, the day the
+  # archive stops serving it.
   - name: bullseye
     galaxy: {name: Debian, version: bullseye}
     # Like Debian 12, the `genericcloud` variant never brings sshd up here —

@@ -49,19 +49,21 @@ Break the link the day the lists have to differ, not before.
 Supported does not mean current : a platform stays in the list as long as we
 can still test it, whatever its upstream end of life. What we cannot do is
 guarantee one whose packages are no longer reachable, and that is where an
-entry leaves both files at once.
+entry leaves both files at once. A release past its end of life usually keeps
+its packages on an archive mirror rather than losing them, and reaching them
+there is the baseline's job, not the role's.
 
 `molecule/shared/` also hosts the `create.yml`, `destroy.yml` and `prepare.yml`
 playbooks that every scenario points at through `provisioner.playbooks`.
 Molecule ignores that directory as a scenario because it carries no
 `molecule.yml`.
 
-`prepare.yml` stays minimal on purpose : it upgrades the system, enables the
-Gentoo binhost, reboots when a new kernel came, and stops there. Nothing
-converges `gwerlas.system` — this role only imports its user management — so a
-converge exercises Podman on a stock cloud image, which is the point. What a
-platform needs beyond that baseline is a gap in the role, not something prepare
-should paper over.
+`prepare.yml` stays minimal on purpose : it upgrades the system, points an
+archived Debian at `archive.debian.org`, enables the Gentoo binhost, reboots
+when a new kernel came, and stops there. Nothing converges `gwerlas.system` —
+this role only imports its user management — so a converge exercises Podman on
+a stock cloud image, which is the point. What a platform needs beyond that
+baseline is a gap in the role, not something prepare should paper over.
 
 ### Distribution defaults
 
