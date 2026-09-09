@@ -226,8 +226,19 @@ molecule verify
 Editing tasks
 -------------
 
-`yamllint` and `ansible-lint` leave two habits to the author, both about how a
-value is written rather than what it means.
+`yamllint` and `ansible-lint` leave three habits to the author.
+
+**`command` only where no module does the job.** Look for a module first, and
+not only for the obvious verbs : `ansible.builtin.stat` reads a path's SELinux
+context with `get_selinux_context`, `containers.podman.podman_system_info`
+answers where the container store lives. A module reports its own changes, so
+it needs no `changed_when` for a read ; it takes its arguments as data, so
+nothing is split on whitespace ; and it says what it did rather than what it
+ran. `restorecon` is a fair use of `command` — nothing wraps it — and then the
+arguments go in `argv`, never in `cmd`, which is a line to be split and will
+tear a Jinja expression into pieces the day one holds a space.
+
+The two that follow are about how a value is written rather than what it means.
 
 **A scalar wherever the module coerces one.** A parameter declared
 `type: list, elements: str` accepts a bare string and wraps it itself, so a
