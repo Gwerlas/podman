@@ -1,6 +1,11 @@
 ---
 dependency:
   name: galaxy
+  # ansible-galaxy refuses to write over a role directory that already exists,
+  # and gives up rather than replacing it — so a version bump in
+  # requirements.yml stops the run until someone deletes the cached copy.
+  options:
+    force: true
 driver:
   name: default
 # Every platform of molecule/shared/platforms.yml. The `service` scenario links
