@@ -1,0 +1,39 @@
+---
+# Wrappers only : the scripts the role drops in podman_wrappers_path, and what
+# they do on their first call. Running one means running podman, which is why
+# this scenario needs real VMs like the others. Its platform list is the one
+# molecule/default/molecule.yml declares.
+- name: Converge
+  hosts: all
+  vars:
+    podman_retries: 10
+    podman_delay: 3
+    # The pull policy is not this scenario's subject, and the podman bullseye
+    # ships refuses the one podman_wrappers_values carries. Drop it, so the
+    # probes reach podman everywhere : its own default pulls what is missing,
+    # which is all these three need.
+    podman_wrappers_values:
+      rm: true
+      tty: true
+    # `name` rather than `command`, so the wrappers run the image's own entry
+    # point instead of looking for a binary named after itself. One probe per
+    # kind of source : the bind is deliberately absent from the guest, podman
+    # would refuse to start and the wrapper has to create it on its first
+    # call ; the named volume is podman's own and has to come out untouched ;
+    # the variable is neither until the caller's shell expands it, and the
+    # verify calls it once as each.
+    podman_wrappers:
+      - name: bind-source-probe
+        image: docker.io/hello-world
+        volume:
+          - /var/tmp/wrapper-bind-source:/probe
+      - name: named-volume-probe
+        image: docker.io/hello-world
+        volume:
+          - wrapper-named-volume:/probe
+      - name: variable-source-probe
+        image: docker.io/hello-world
+        volume:
+          - $WRAPPER_PROBE_SOURCE:/probe
+  roles:
+    - gwerlas.podman

@@ -1,0 +1,114 @@
+---
+- name: Verify the wrappers create what podman will not
+  hosts: all
+  tasks:
+    # Writing the wrapper must not create anything by itself: the guard the
+    # script carries is what has to do it, on the first call.
+    - name: Read the wrapper's bind mount source before any call
+      ansible.builtin.stat:
+        path: /var/tmp/wrapper-bind-source
+      register: bind_source_before
+
+    - name: Check the converge left it alone
+      ansible.builtin.assert:
+        that:
+          - not bind_source_before.stat.exists
+        fail_msg: the converge created the bind mount source itself
+
+    # Called by its path alone : `command` execve's it rather than handing it to
+    # a shell, so this turns ENOEXEC into a failure the day the wrapper loses
+    # its shebang.
+    - name: Call the wrapper with a missing bind mount source
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/bind-source-probe
+      changed_when: true
+      register: bind_source_probe
+      failed_when:
+        - bind_source_probe.rc > 0
+        - "'Hello from Docker!' not in bind_source_probe.stdout"
+
+    - name: Read the bind mount source again
+      ansible.builtin.stat:
+        path: /var/tmp/wrapper-bind-source
+      register: bind_source_after
+
+    - name: Check the wrapper created it rather than failing to start
+      ansible.builtin.assert:
+        that:
+          - bind_source_after.stat.exists
+          - bind_source_after.stat.isdir
+        fail_msg: the wrapper did not create its missing bind mount source
+
+    # A named volume is podman's to create, wherever the user happens to call
+    # the wrapper from : a directory of that name in the working directory is
+    # the wrapper having mistaken it for a bind mount source.
+    - name: Call the wrapper mounting a named volume
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/named-volume-probe
+        chdir: /var/tmp
+      changed_when: true
+      register: named_volume_probe
+      failed_when:
+        - named_volume_probe.rc > 0
+        - "'Hello from Docker!' not in named_volume_probe.stdout"
+
+    - name: Read the working directory the wrapper was called from
+      ansible.builtin.stat:
+        path: /var/tmp/wrapper-named-volume
+      register: named_volume_dir
+
+    - name: Check the wrapper left the named volume to podman
+      ansible.builtin.assert:
+        that:
+          - not named_volume_dir.stat.exists
+        fail_msg: the wrapper took a named volume for a bind mount source
+
+    # Same wrapper, same spec, called once as each : what the source is can
+    # only be read off the expanded value, and both readings have to hold.
+    - name: Call the wrapper with a variable holding a path
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/variable-source-probe
+        chdir: /var/tmp
+      environment:
+        WRAPPER_PROBE_SOURCE: /var/tmp/wrapper-variable-source
+      changed_when: true
+      register: variable_path_probe
+      failed_when:
+        - variable_path_probe.rc > 0
+        - "'Hello from Docker!' not in variable_path_probe.stdout"
+
+    - name: Call the wrapper with a variable holding a volume name
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/variable-source-probe
+        chdir: /var/tmp
+      environment:
+        WRAPPER_PROBE_SOURCE: wrapper-variable-volume
+      changed_when: true
+      register: variable_name_probe
+      failed_when:
+        - variable_name_probe.rc > 0
+        - "'Hello from Docker!' not in variable_name_probe.stdout"
+
+    - name: Read what each call left behind
+      ansible.builtin.stat:
+        path: "/var/tmp/{{ item }}"
+      register: variable_sources
+      loop:
+        - wrapper-variable-source
+        - wrapper-variable-volume
+
+    - name: Check the expanded value is what decided
+      vars:
+        as_path: "{{ variable_sources.results[0].stat }}"
+        as_name: "{{ variable_sources.results[1].stat }}"
+      ansible.builtin.assert:
+        that:
+          - as_path.exists
+          - as_path.isdir
+          - not as_name.exists
+        fail_msg: >-
+          path={{ as_path.exists }} name={{ as_name.exists }}

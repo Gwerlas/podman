@@ -1,3 +1,20 @@
+{#
+  A spec without a destination is an anonymous volume : nothing to pre-create,
+  and the colon is the one thing we can read off the template itself. What the
+  source turns out to be is only knowable once the shell has expanded it, so
+  the classification is left to the emitted function below.
+-#}
+{% macro bind_source(spec) %}
+{% if ':' in spec %}
+podman_wrapper_bind_source "{{ spec.split(':') | first }}"
+{% endif %}
+{% endmacro %}
+{#
+  /bin/sh, not `env sh` : the interpreter of a root-installed wrapper must not
+  depend on the caller's PATH. What follows stays POSIX, and carries no
+  `set -u` -- the ssh_auth_sock extra reads $SSH_AUTH_SOCK with no default.
+-#}
+#!/bin/sh
 # Ansible managed - do not edit
 
 {% set data = podman_wrappers_values | combine(wrapper) %}
@@ -7,6 +24,25 @@
 CONTAINER_OPTS=""
 {% endif %}
 
+{% if 'volume' in wrapper and 'volume' in podman_wrappers_autofill %}
+{#
+  "If the source does not exist, Podman returns an error. Users must
+  pre-create the source files or directories." -- podman-run(1), --volume :
+  https://docs.podman.io/en/latest/markdown/podman-run.1.html
+  The same option classifies what it is given : a source that does not begin
+  with a . or / is the name of a named volume, podman's own to create. The
+  case below is that rule, applied where podman applies it -- to the expanded
+  value -- so a variable holding either one lands where podman would put it.
+  `install -d` is left to fail on a path the user cannot create, right before
+  podman reports the same mount as missing.
+-#}
+podman_wrapper_bind_source() {
+  case "$1" in
+    [/.]*) [ -e "$1" ] || install -d "$1" ;;
+  esac
+}
+
+{% endif %}
 # Podman options
 # https://docs.ansible.com/ansible/latest/collections/containers/podman/podman_container_module.html
 {% for key in podman_wrappers_autofill %}
@@ -19,6 +55,9 @@ CONTAINER_OPTS="$CONTAINER_OPTS --{{ parameter }} {{ k }}={{ v }}"
 {% endfor %}
 {% elif value is iterable and not value is string %}
 {% for i in value %}
+{% if key == 'volume' %}
+{{ bind_source(i) -}}
+{% endif %}
 CONTAINER_OPTS="$CONTAINER_OPTS --{{ parameter }} {{ i }}"
 {% endfor %}
 {% elif value is boolean %}
@@ -26,6 +65,9 @@ CONTAINER_OPTS="$CONTAINER_OPTS --{{ parameter }} {{ i }}"
 CONTAINER_OPTS="$CONTAINER_OPTS --{{ parameter }}"
 {% endif %}
 {% else %}
+{% if key == 'volume' %}
+{{ bind_source(value) -}}
+{% endif %}
 CONTAINER_OPTS="$CONTAINER_OPTS --{{ parameter }} {{ value }}"
 {% endif %}
 {% endif %}

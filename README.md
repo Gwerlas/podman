@@ -419,6 +419,26 @@ all of the [ansible podman_container module][] arguments plus :
 - `username`: Username to use when authenticating to remote registries.
 - `password`: Password to use when authenticating to remote registries.
 
+A bind mount source declared in `volume` is created as a directory if it
+doesn't exist yet, just before the container starts. This lets a wrapper
+mount a path that only comes into existence once the command has run, such
+as a per-project cache.
+
+Named volumes and anonymous volumes are left to Podman, which already
+creates those itself. The two are told apart by Podman's own rule — a source
+that doesn't begin with a `.` or a `/` names a volume — applied where Podman
+applies it, to the value your shell hands over. A variable therefore works
+for either : `$HOME/.cache/foo` is pre-created as a directory, a variable
+holding a volume name is left alone. A leading `~` is not expanded, in the
+wrapper no more than in `podman run` itself.
+
+The source is read off the entry at its colon, so that colon has to be in
+the `volume` entry itself. A single variable carrying both halves — `$MOUNT`,
+with `MOUNT=/data:/data` — leaves nothing to read : the wrapper pre-creates
+nothing and Podman fails with `statfs /data: no such file or directory`.
+Keep the destination literal and give the variable the source alone :
+`$MOUNT:/data`.
+
 [ansible podman_container module]: https://docs.ansible.com/ansible/latest/collections/containers/podman/podman_container_module.html
 
 You can add (or remove) the supported parameters list editing the

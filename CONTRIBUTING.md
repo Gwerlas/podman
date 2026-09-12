@@ -42,9 +42,9 @@ python3 scripts/sync-meta-platforms.py
 
 Each scenario's `molecule.yml` then picks a subset by name, with its own
 `groups` / `memory` / `vcpus` overrides. Two scenarios wanting the same subset
-share one file rather than repeating it — `service` links its `molecule.yml` to
-`default`'s, and what makes the scenario itself is said in its `converge.yml`.
-Break the link the day the lists have to differ, not before.
+share one file rather than repeating it — `service` and `wrapper` link their
+`molecule.yml` to `default`'s, and what makes a scenario itself is said in its
+`converge.yml`. Break a link the day the lists have to differ, not before.
 
 Supported does not mean current : a platform stays in the list as long as we
 can still test it, whatever its upstream end of life. What we cannot do is
@@ -155,6 +155,12 @@ systemd units and a reboot :
 
 ```sh
 molecule test -s service
+```
+
+Test the wrappers, and what their first call has to create :
+
+```sh
+molecule test -s wrapper
 ```
 
 Every scenario boots the same platform list, catalogued in
@@ -359,7 +365,8 @@ variable, or a change in behaviour, is not finished until :
 
 - a molecule scenario exercises it — an existing one where it fits,
   `mimic-docker` for anything about the `docker` command, `service` for the
-  rootless units, `default` for the role's own defaults;
+  rootless units, `wrapper` for the scripts in `podman_wrappers_path`,
+  `default` for the role's own defaults;
 - the user-facing half is written in `README.md` : what the variable does, its
   default, an example;
 - the reasoning a future maintainer will need — an upstream constraint, a
