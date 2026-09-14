@@ -2,6 +2,43 @@
 - name: Verify the wrappers create what podman will not
   hosts: all
   tasks:
+    # The pull policy follows the podman on the host, and the converge that
+    # wrote the wrapper is the one that installed that podman.
+    - name: Ask podman its version
+      ansible.builtin.command:
+        argv:
+          - podman
+          - --version
+      changed_when: false
+      register: podman_installed_version
+
+    - name: Read a wrapper
+      ansible.builtin.slurp:
+        src: /usr/local/bin/bind-source-probe
+      register: probe_script
+
+    - name: Check its pull policy suits this podman
+      vars:
+        installed: "{{ podman_installed_version.stdout.split(' ')[2] }}"
+        script: "{{ probe_script.content | b64decode }}"
+      ansible.builtin.assert:
+        that: >-
+          ('--pull newer' in script)
+          if installed is version('3.4', '>=')
+          else ('--pull' not in script)
+        fail_msg: "podman {{ installed }}, wrapper : {{ script }}"
+
+    - name: Read the wrapper whose converge set pull to null
+      ansible.builtin.slurp:
+        src: /usr/local/bin/named-volume-probe
+      register: nulled_script
+
+    - name: Check a null option is dropped, default or not
+      ansible.builtin.assert:
+        that:
+          - "'--pull' not in (nulled_script.content | b64decode)"
+        fail_msg: "{{ nulled_script.content | b64decode }}"
+
     # Writing the wrapper must not create anything by itself: the guard the
     # script carries is what has to do it, on the first call.
     - name: Read the wrapper's bind mount source before any call

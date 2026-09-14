@@ -20,8 +20,14 @@ podman_containers: []
 podman_wrappers: []
 podman_wrappers_path: /usr/local/bin
 
+# bullseye's podman 3.0.1 has no `newer` policy and rejects the flag before it
+# runs anything, killing the wrapper on its first call. Below 3.4, the lowest
+# version we have a platform for that takes `newer` -- jammy's 3.4.4 -- the
+# flag is left out and podman applies its own default, rather than guess where
+# upstream drew the line. podman_version is null until packages.yml has
+# installed podman and refreshed the facts, hence the guard.
 podman_wrappers_values:
-  pull: newer
+  pull: "{{ 'newer' if podman_version and podman_version is version('3.4', '>=') else none }}"
   rm: true
   tty: true
 

@@ -445,6 +445,11 @@ You can add (or remove) the supported parameters list editing the
 `podman_wrappers_autofill` variable. You also can editing the default values
 editing the `podman_wrappers_values` variable.
 
+Its pull policy follows the Podman installed on the host : `newer` from 3.4
+on, and no `--pull` at all below, where `newer` does not exist — Podman then
+applies its own default. Setting an option to `null` in a wrapper drops it,
+the defaults included : `pull: null` leaves the policy to Podman on every host.
+
 Example Playbook
 ----------------
 
