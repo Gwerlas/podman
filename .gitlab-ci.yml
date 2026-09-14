@@ -33,7 +33,7 @@ workflow:
           - handlers/**/*
           - meta/**/*
           - molecule/**/*
-          - scripts/**/*
+          - requirements.yml
           - tasks/**/*
           - templates/**/*
           - vars/**/*
@@ -60,9 +60,11 @@ ansible-lint:
           - .config/**/*
           - .gitlab-ci.yml
           - defaults/**/*
+          - filter_plugins/**/*
           - handlers/**/*
           - meta/**/*
           - molecule/**/*
+          - requirements.yml
           - tasks/**/*
           - vars/**/*
   script: ansible-lint
