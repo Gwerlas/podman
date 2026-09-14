@@ -3,3 +3,21 @@
   hosts: all
   roles:
     - role: gwerlas.podman
+  # The first converge is the one installing podman : the version fact has to
+  # describe that podman already, not only from the next run on.
+  post_tasks:
+    - name: Ask podman its version
+      ansible.builtin.command:
+        argv:
+          - podman
+          - --version
+      changed_when: false
+      register: podman_installed_version
+
+    - name: Check the version fact caught up with the install
+      ansible.builtin.assert:
+        that:
+          - podman_version == podman_installed_version.stdout.split(' ')[2]
+        fail_msg: >-
+          fact={{ podman_version }}
+          installed={{ podman_installed_version.stdout }}

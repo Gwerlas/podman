@@ -28,16 +28,19 @@
         and podman_users | length > 0
       }}
 
+# Not `result` : packages.yml imports this file under `when: result.changed`,
+# and a probe registered under that name would turn the condition false for
+# every task after it -- the fact below included.
 - name: Get the version of podman
   ansible.builtin.command:
     cmd: podman --version
   changed_when: false
   check_mode: false
   failed_when: false
-  register: result
+  register: podman_version_probe
 
 - name: Facts - Global
   ansible.builtin.set_fact:
     cacheable: true
-    podman_version: "{{ (result.rc == 0) | ternary(result.stdout.split(' ')[2], None) }}"
+    podman_version: "{{ (podman_version_probe.rc == 0) | ternary(podman_version_probe.stdout.split(' ')[2], None) }}"
     podman_packages: "{{ packages_computed }}"
