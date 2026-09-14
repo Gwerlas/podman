@@ -2,9 +2,6 @@
 - name: Services
   when: podman_mimic_docker
   block:
-    - name: Services - Be sure to have the right podman current version
-      ansible.builtin.import_tasks: "{{ role_path }}/tasks/facts.yml"
-
     - name: Services - Systemd sockets
       when:
         - ansible_facts.service_mgr == "systemd"
