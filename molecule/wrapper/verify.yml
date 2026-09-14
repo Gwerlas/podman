@@ -149,3 +149,42 @@
           - not as_name.exists
         fail_msg: >-
           path={{ as_path.exists }} name={{ as_name.exists }}
+
+    # CONTAINER_OPTS reaches podman only through a wrapper that asks for it. A
+    # named volume leaves a trace of the options podman actually received.
+    - name: Call the wrapper that extends its caller's options
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/extends-probe
+      environment:
+        CONTAINER_OPTS: --volume wrapper-extends-volume:/extra
+      changed_when: true
+      register: extends_probe
+      failed_when:
+        - extends_probe.rc > 0
+        - "'Hello from Docker!' not in extends_probe.stdout"
+
+    - name: Call a wrapper that keeps the default
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/bind-source-probe
+      environment:
+        CONTAINER_OPTS: --volume wrapper-reset-volume:/extra
+      changed_when: true
+      register: reset_probe
+      failed_when:
+        - reset_probe.rc > 0
+        - "'Hello from Docker!' not in reset_probe.stdout"
+
+    - name: List the volumes podman created
+      containers.podman.podman_volume_info:
+      register: podman_volumes
+
+    - name: Check only the extending wrapper passed its caller's options on
+      vars:
+        names: "{{ podman_volumes.volumes | map(attribute='Name') | list }}"
+      ansible.builtin.assert:
+        that:
+          - "'wrapper-extends-volume' in names"
+          - "'wrapper-reset-volume' not in names"
+        fail_msg: "volumes : {{ names }}"

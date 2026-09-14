@@ -418,6 +418,18 @@ all of the [ansible podman_container module][] arguments plus :
 
 - `username`: Username to use when authenticating to remote registries.
 - `password`: Password to use when authenticating to remote registries.
+- `can_extends`: Let the options a caller exports in `CONTAINER_OPTS` reach
+  `podman run`, ahead of the wrapper's own. Defaults to `false`.
+
+`can_extends` is for a script of yours that tunes a wrapper for one call :
+
+```sh
+CONTAINER_OPTS="--volume $PWD/certs:/etc/ssl/private:ro" molecule test
+```
+
+Leave it to `false` otherwise : the wrapper then starts from an empty
+`CONTAINER_OPTS`, so a variable of that name lingering in a shell never reaches
+a container behind your back.
 
 A bind mount source declared in `volume` is created as a directory if it
 doesn't exist yet, just before the container starts. This lets a wrapper

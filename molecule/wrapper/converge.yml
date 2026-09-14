@@ -27,6 +27,11 @@
         pull: null
         volume:
           - wrapper-named-volume:/probe
+      # Starts from the CONTAINER_OPTS of its caller, where every other probe
+      # resets it.
+      - name: extends-probe
+        image: docker.io/hello-world
+        can_extends: true
       - name: variable-source-probe
         image: docker.io/hello-world
         volume:
