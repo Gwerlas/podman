@@ -163,6 +163,21 @@ Test the wrappers, and what their first call has to create :
 molecule test -s wrapper
 ```
 
+A scenario always converges the whole role, so none of them runs a tag on its
+own. The `tagged-run` job does, for `wrappers` and `provision`, in a container ;
+reproduce it with the image it uses :
+
+```sh
+podman run --rm -v "$PWD":/role:Z -w /role gwerlas/ansible:debian sh -c '
+  ansible-galaxy install -r requirements.yml
+  mkdir -p ~/.ansible/roles && ln -sfn "$PWD" ~/.ansible/roles/gwerlas.podman
+  ansible-playbook -i localhost, tests/tagged-run.yml --tags wrappers'
+```
+
+`users` and `packages` are not in that job : they need a host where `become`
+and the package manager work, which a container is not. A change to what those
+two tags run is checked by limiting a converge to them by hand.
+
 Every scenario boots the same platform list, catalogued in
 [`molecule/shared/platforms.yml`](molecule/shared/platforms.yml). Comment out
 what you don't need in a scenario's `molecule.yml` while developing : a full

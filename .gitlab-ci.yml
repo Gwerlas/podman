@@ -36,6 +36,7 @@ workflow:
           - requirements.yml
           - tasks/**/*
           - templates/**/*
+          - tests/**/*
           - vars/**/*
 
 # Run when the listed paths changed against the default branch, and
@@ -66,6 +67,7 @@ ansible-lint:
           - molecule/**/*
           - requirements.yml
           - tasks/**/*
+          - tests/**/*
           - vars/**/*
   script: ansible-lint
 
@@ -110,6 +112,41 @@ markdownlint:
           - .markdownlint.yaml
   script:
     - markdownlint-cli2 "**/*.md"
+
+# Molecule converges the whole role, never one tag of it, so a tag that stops
+# working on its own ships through a green pipeline. Two of them run alone here,
+# in a container, since they only touch what a container has : `users` and
+# `packages` need a real host, see CONTRIBUTING.md. The Debian variant of the
+# image because the role supports no Alpine host.
+tagged-run:
+  image: gwerlas/ansible:debian
+  parallel:
+    matrix:
+      - TAG:
+          - wrappers
+          - provision
+  rules:
+    - *on-default-branch
+    - changes:
+        compare_to: refs/heads/main
+        paths:
+          - .gitlab-ci.yml
+          - defaults/**/*
+          - filter_plugins/**/*
+          - handlers/**/*
+          - meta/**/*
+          - requirements.yml
+          - tasks/**/*
+          - templates/**/*
+          - tests/**/*
+          - vars/**/*
+  before_script:
+    - ansible-galaxy install -r requirements.yml
+    # The playbook names the role as the scenarios do.
+    - mkdir -p "$HOME/.ansible/roles"
+    - ln -sfn "$CI_PROJECT_DIR" "$HOME/.ansible/roles/gwerlas.podman"
+  script:
+    - ansible-playbook -i localhost, tests/tagged-run.yml --tags "$TAG"
 
 import:
   stage: deploy

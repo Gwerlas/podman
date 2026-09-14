@@ -1,5 +1,9 @@
 ---
+# `always` : every tagged part of the role reads these facts, so a run limited
+# to one tag must still load them.
 - name: Load facts
+  tags:
+    - always
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/facts.yml"
 
 - name: Packages

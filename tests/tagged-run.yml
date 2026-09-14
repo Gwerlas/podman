@@ -1,0 +1,29 @@
+---
+# One tag of the role at a time, the way `ansible-playbook --tags` limits a run
+# on a real host. Driven by the `tagged-run` job, see .gitlab-ci.yml.
+- name: Run the role limited to one tag
+  hosts: localhost
+  connection: local
+  vars:
+    podman_wrappers_path: /tmp/wrappers
+    podman_wrappers:
+      - name: tagged-run-probe
+        image: docker.io/hello-world
+  roles:
+    - role: gwerlas.podman
+  post_tasks:
+    # Tagged like the tasks it checks : a run limited to another tag skips it.
+    - name: Read the wrapper the tag has to write
+      tags:
+        - wrappers
+      ansible.builtin.stat:
+        path: /tmp/wrappers/tagged-run-probe
+      register: tagged_run_probe
+
+    - name: Check the tag wrote it
+      tags:
+        - wrappers
+      ansible.builtin.assert:
+        that:
+          - tagged_run_probe.stat.exists
+        fail_msg: the wrappers tag ran without writing its wrapper
