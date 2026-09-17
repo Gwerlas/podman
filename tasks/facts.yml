@@ -31,6 +31,10 @@
 # Not `result` : packages.yml imports this file under `when: result.changed`,
 # and a probe registered under that name would turn the condition false for
 # every task after it -- the fact below included.
+#
+# Not podman_system_info either : `podman system info` opens the store, and the
+# database it creates then pins the graph driver, before config.yml has written
+# the storage.conf naming it. `--version` is the one read that opens nothing.
 - name: Get the version of podman
   ansible.builtin.command:
     cmd: podman --version

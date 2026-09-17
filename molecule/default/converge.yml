@@ -4,20 +4,17 @@
   roles:
     - role: gwerlas.podman
   # The first converge is the one installing podman : the version fact has to
-  # describe that podman already, not only from the next run on.
+  # describe that podman already, not only from the next run on. The reference
+  # comes from podman_system_info, so it shares no parsing with the fact.
   post_tasks:
     - name: Ask podman its version
-      ansible.builtin.command:
-        argv:
-          - podman
-          - --version
-      changed_when: false
-      register: podman_installed_version
+      containers.podman.podman_system_info:
+      register: podman_info
 
     - name: Check the version fact caught up with the install
       ansible.builtin.assert:
         that:
-          - podman_version == podman_installed_version.stdout.split(' ')[2]
+          - podman_version == podman_info.podman_system_info.version.Version
         fail_msg: >-
           fact={{ podman_version }}
-          installed={{ podman_installed_version.stdout }}
+          installed={{ podman_info.podman_system_info.version.Version }}
