@@ -399,3 +399,16 @@ bare number on a line of its own : git strips a line opening on `#` as a
 comment whenever the message goes through an editor, and the reference vanishes
 without a word. `README.md` never carries an issue number — a user can do
 nothing with it, and it goes stale the day the issue closes.
+
+Tagging a release
+-----------------
+
+A tag publishes. The `import` job pushes the role to Ansible Galaxy and runs
+on a protected tag and nowhere else.
+
+What users install is not the repository. Galaxy only records the tag and
+serves GitHub's archive of it, which `git archive` builds, so every path marked
+`export-ignore` in [`.gitattributes`](.gitattributes) stays out of it:
+Molecule, CI, the tagged-run playbook, linter and editor settings, this guide.
+A new file that only serves development belongs in that list; check what a tag
+would ship with `git archive HEAD | tar t`.
