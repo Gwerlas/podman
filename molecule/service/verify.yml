@@ -49,6 +49,22 @@
           - "'[storage.options]' not in lines"
         fail_msg: "rendered : {{ lines }}"
 
+    - name: Read the rendered containers configuration
+      become: true
+      ansible.builtin.slurp:
+        src: /etc/containers/containers.conf
+      register: containers_conf
+
+    - name: Check the user's settings merged into the distribution's
+      vars:
+        lines: "{{ (containers_conf.content | b64decode).split('\n') }}"
+      ansible.builtin.assert:
+        that:
+          - "'events_logger = \"file\"' in lines"
+          - "'log_driver = \"journald\"' not in lines"
+          - "inventory_hostname != 'bullseye' or 'cgroup_manager = \"cgroupfs\"' in lines"
+        fail_msg: "rendered : {{ lines }}"
+
     - name: Hello world
       become: true
       become_user: myapp

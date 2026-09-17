@@ -11,12 +11,14 @@
     {%- set config = {} -%}
 {%- endif -%}
 
-{%- set data = defaults | combine(config) %}
+{#- A null removes what the defaults set, a key or a whole table. -#}
+{%- set data = defaults | combine(config, recursive=true) %}
 
 {% for section in ['containers', 'engine', 'network', 'machine', 'service_destinations', 'secret'] %}
-{% if data[section] is defined %}
+{% set table = data[section] | default({}, true) %}
+{% if table.values() | reject('none') | list %}
 [{{ section }}]
-{% for key, value in data[section].items() %}
+{% for key, value in table.items() if value is not none %}
 {% if value is string %}
 {{ key }} = "{{ value }}"
 {% elif value is boolean %}

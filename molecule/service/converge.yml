@@ -12,6 +12,14 @@
         options:
           overlay:
             mountopt: nodev
+    # bullseye's vars file sets containers.log_driver and engine.cgroup_manager :
+    # one table takes a key next to the distribution's, the other loses the key
+    # set to null.
+    podman_containers_config:
+      containers:
+        log_driver: null
+      engine:
+        events_logger: file
     podman_retries: 10
     podman_delay: 3
     podman_users:

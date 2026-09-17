@@ -16,9 +16,10 @@
 %}
 {% set config = podman_registries_config | default({}) %}
 
+{#- A null removes what the defaults set. -#}
 {%- set data = defaults | combine(config, recursive=true) %}
 
-{% for key, value in data.items() %}
+{% for key, value in data.items() if value is not none %}
 {% if value is string %}
 {{ key }} = "{{ value }}"
 {% elif value is boolean %}
@@ -28,10 +29,10 @@
 {% endif %}
 {% endfor %}
 
-{% if data.registry is defined and data.registry | length %}
+{% if data.registry | default([], true) %}
 {% for registry in data.registry %}
 [[registry]]
-{% for key, value in registry.items() %}
+{% for key, value in registry.items() if value is not none %}
 {% if value is string %}
 {{ key }} = "{{ value }}"
 {% elif value is boolean %}

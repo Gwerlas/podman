@@ -11,25 +11,27 @@
     {%- set config = {} -%}
 {%- endif -%}
 
-{%- set data = defaults | combine(config) -%}
+{#- A null removes what the defaults set, a key or a whole table. -#}
+{%- set data = defaults | combine(config, recursive=true) -%}
+{%- set storage = data.storage | default({}, true) -%}
+{%- set options = storage.options | default({}, true) -%}
 {#- The driver sections of [storage.options], rendered on their own below
     rather than as keys of the table that holds them. -#}
 {%- set sections = ['aufs', 'btrfs', 'thinpool', 'overlay', 'vfs', 'zfs'] -%}
 {#- A table is written only when it holds a key of its own. An empty [storage]
     is not harmless : podman warns that no driver is set and picks one itself. -#}
-{%- set storage_keys = data.storage | default({}) | reject('eq', 'options') | list -%}
-{%- set option_keys = data.storage.options | default({}) | reject('in', sections) | list -%}
-{%- set driver_sections = sections | select('in', data.storage.options | default({})) | list %}
+{%- set storage_keys = storage | dict2items | rejectattr('value', 'none') | map(attribute='key') | reject('eq', 'options') | list -%}
+{%- set option_keys = options | dict2items | rejectattr('value', 'none') | map(attribute='key') | reject('in', sections) | list %}
 {% if storage_keys %}
 
 [storage]
 {% for key in storage_keys %}
-{% if data.storage[key] is string %}
-{{ key }} = "{{ data.storage[key] }}"
-{% elif data.storage[key] is boolean %}
-{{ key }} = {{ data.storage[key] | lower }}
+{% if storage[key] is string %}
+{{ key }} = "{{ storage[key] }}"
+{% elif storage[key] is boolean %}
+{{ key }} = {{ storage[key] | lower }}
 {% else %}
-{{ key }} = {{ data.storage[key] }}
+{{ key }} = {{ storage[key] }}
 {% endif %}
 {% endfor %}
 {% endif %}
@@ -37,19 +39,19 @@
 
 [storage.options]
 {% for key in option_keys %}
-{% if data.storage.options[key] is string %}
-{{ key }} = "{{ data.storage.options[key] }}"
-{% elif data.storage.options[key] is boolean %}
-{{ key }} = {{ data.storage.options[key] | lower }}
+{% if options[key] is string %}
+{{ key }} = "{{ options[key] }}"
+{% elif options[key] is boolean %}
+{{ key }} = {{ options[key] | lower }}
 {% else %}
-{{ key }} = {{ data.storage.options[key] }}
+{{ key }} = {{ options[key] }}
 {% endif %}
 {% endfor %}
 {% endif %}
-{% for section in driver_sections %}
+{% for section in sections if options[section] | default(none) is mapping and options[section].values() | reject('none') | list %}
 
 [storage.options.{{ section }}]
-{% for key, value in data.storage.options[section].items() %}
+{% for key, value in options[section].items() if value is not none %}
 {% if value is string %}
 {{ key }} = "{{ value }}"
 {% elif value is boolean %}

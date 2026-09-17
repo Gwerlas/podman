@@ -197,11 +197,31 @@ out".
 
 ### Podman configuration
 
-By default, we let the configuration files of the distribution inchanged.
+By default, we let the configuration files of the distribution inchanged,
+except for the settings a distribution needs to work at all — Debian 11 runs its
+containers with `cgroupfs` and `journald`.
 
-Except for the Debian 11 containers settings who does not work out of the box.
+To use a customized configuration, use `podman_*_config` settings. They are
+merged into those distribution settings, table by table : a key You name
+overrides the distribution's, the others stay. A list is replaced as a whole.
 
-To use a customized configuration, use `podman_*_config` settings.
+To remove a distribution setting, set it to `null` — a key, or a whole table :
+
+```yaml
+podman_containers_config:
+  containers:
+    log_driver: null
+  engine:
+    events_logger: file
+```
+
+Renders on Debian 11 :
+
+```ini
+[engine]
+cgroup_manager = "cgroupfs"
+events_logger = "file"
+```
 
 #### Containers
 
@@ -230,9 +250,6 @@ log_drivers = "journald"
 [engine]
 cgroup_manager = "cgroupfs"
 ```
-
-For Debian 11 only, we overwrite the distribution defaults by the
-configuration above.
 
 #### Registries
 
@@ -314,9 +331,6 @@ Will generate the `/etc/containers/libpod.conf` bellow :
 ```ini
 cgroup_manager = "cgroupfs"
 ```
-
-For Debian 11 only, we overwrite the distribution defaults by the
-configuration above.
 
 ### Optional features
 
