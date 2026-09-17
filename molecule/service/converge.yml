@@ -20,6 +20,13 @@
         log_driver: null
       engine:
         events_logger: file
+    # mirror.gcr.io serves Docker Hub's library images, which is all the
+    # containers below pull.
+    podman_registries_config:
+      registry:
+        - location: docker.io
+          mirror:
+            - location: mirror.gcr.io
     podman_retries: 10
     podman_delay: 3
     podman_users:

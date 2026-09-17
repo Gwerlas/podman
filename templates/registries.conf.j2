@@ -41,10 +41,10 @@
 {{ key }} = {{ value }}
 {% endif %}
 {% endfor %}
-{% if registry.mirror is defined and registry.mirror | length > 0 %}
+{% if registry.mirror | default([], true) %}
 {% for mirror in registry.mirror %}
 [[registry.mirror]]
-{% for key, value in registry.mirror.items() %}
+{% for key, value in mirror.items() if value is not none %}
 {% if value is string %}
 {{ key }} = "{{ value }}"
 {% elif value is boolean %}

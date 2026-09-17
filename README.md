@@ -270,6 +270,9 @@ podman_registries_config:
   registry:
     - location: my-insecure-registry:5000
       insecure: true
+    - location: docker.io
+      mirror:
+        - location: mirror.gcr.io
 ```
 
 Will generate the `/etc/containers/registries.conf` bellow :
@@ -278,8 +281,12 @@ Will generate the `/etc/containers/registries.conf` bellow :
 unqualified-search-registries = ['docker.io']
 
 [[registry]]
-location = my-insecure-registry:5000
+location = "my-insecure-registry:5000"
 insecure = true
+[[registry]]
+location = "docker.io"
+[[registry.mirror]]
+location = "mirror.gcr.io"
 ```
 
 #### Storage

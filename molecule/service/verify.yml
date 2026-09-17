@@ -65,6 +65,19 @@
           - "inventory_hostname != 'bullseye' or 'cgroup_manager = \"cgroupfs\"' in lines"
         fail_msg: "rendered : {{ lines }}"
 
+    - name: Ask podman the registries it read
+      become: true
+      containers.podman.podman_system_info:
+      register: podman_info
+
+    - name: Check the mirror reached podman
+      vars:
+        registries: "{{ podman_info.podman_system_info.registries }}"
+      ansible.builtin.assert:
+        that:
+          - registries['docker.io'].Mirrors | map(attribute='Location') | list == ['mirror.gcr.io']
+        fail_msg: "registries : {{ registries }}"
+
     - name: Hello world
       become: true
       become_user: myapp
