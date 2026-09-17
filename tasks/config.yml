@@ -17,7 +17,7 @@
 
     - name: Config - Containers
       when:
-        - default_containers_config is defined or podman_containers_config is defined
+        - podman_containers_defaults is defined or podman_containers_config is defined
       ansible.builtin.template:
         src: containers.conf.j2
         dest: /etc/containers/containers.conf
@@ -25,7 +25,7 @@
 
     - name: Config - Registries
       when: |
-        default_registries_config is defined or
+        podman_registries_defaults is defined or
         podman_registries_config is defined or
         podman_mimic_docker
       ansible.builtin.template:

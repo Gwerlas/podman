@@ -70,15 +70,17 @@ baseline is a gap in the role, not something prepare should paper over.
 You can define some defaults if the distribution packages do not work out of
 the box.
 
-Use the files in the `vars` directory to do it. You can use the
-dictionaries below :
+Use the files in the `vars` directory to do it. Each configuration file the
+role renders reads two dictionaries, named after the file : the distribution's
+`podman_<file>_defaults`, set in `vars/`, and the user's `podman_<file>_config`,
+merged over it.
 
-- `default_containers_config`
-- `default_registries_config`
-- `podman_storage_defaults`
-
-The users `podman_*_config` will be merged with the respective
-`podman_*_defaults`.
+| File                              | Distribution                 | User                       |
+| --------------------------------- | ---------------------------- | -------------------------- |
+| `/etc/containers/containers.conf` | `podman_containers_defaults` | `podman_containers_config` |
+| `/etc/containers/registries.conf` | `podman_registries_defaults` | `podman_registries_config` |
+| `/etc/containers/storage.conf`    | `podman_storage_defaults`    | `podman_storage_config`    |
+| `/etc/containers/libpod.conf`     | `podman_libpod_defaults`     | `podman_libpod_config`     |
 
 Use this facility only if the distribution packages do not work out of the
 box.
