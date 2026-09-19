@@ -6,7 +6,10 @@ collections:
   # test VMs. See CONTRIBUTING.md.
   - name: community.libvirt
     version: ">=2.0"
+  # podman_system_info, which tasks/rootless/store.yml reads to find a user's
+  # container store, ships from 1.17.0 on.
   - name: containers.podman
+    version: ">=1.17.0"
 roles:
   - name: gwerlas.system
     version: 0.21.1

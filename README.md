@@ -24,19 +24,30 @@ Everything is in the [requirements.yml](requirements.yml) file.
 
 ### Collections
 
-For obvious reasons, You'll need the [Containers.Podman][] collection :
+For obvious reasons, You'll need the [Containers.Podman][] collection, in
+version 1.17 or upper : the role asks Podman itself where a user's container
+store lives, through a module older versions do not ship.
 
 ```sh
-ansible-galaxy collection install containers.podman
+ansible-galaxy collection install 'containers.podman:>=1.17.0'
 ```
 
-To be able to manage the required kernel modules, You'll need to have the
-[Community.General][] collection version 8.2 or upper to be installed :
+The [Community.General][] collection, version 8.2 or upper, drives the package
+managers of Gentoo and Arch Linux and writes the SELinux file context rule a
+container store needs :
 
 ```sh
-ansible-galaxy collection install community.general
+ansible-galaxy collection install 'community.general:>=8.2.0'
 ```
 
+The [Ansible.Posix][] collection applies the kernel settings some
+distributions need :
+
+```sh
+ansible-galaxy collection install ansible.posix
+```
+
+[Ansible.Posix]: https://docs.ansible.com/ansible/latest/collections/ansible/posix/index.html
 [Community.General]: https://docs.ansible.com/ansible/latest/collections/community/general/index.html
 [Containers.Podman]: https://docs.ansible.com/ansible/latest/collections/containers/podman/index.html
 
