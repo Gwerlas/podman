@@ -8,7 +8,7 @@ packages:
   rootless:
     - acl
 
-podman_containers_defaults:
+_podman_containers_defaults:
   containers:
     log_driver: journald
   engine:

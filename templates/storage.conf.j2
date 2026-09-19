@@ -1,6 +1,6 @@
 # Ansible managed - do not edit
-{% if podman_storage_defaults is defined -%}
-    {%- set defaults = podman_storage_defaults -%}
+{% if _podman_storage_defaults is defined -%}
+    {%- set defaults = _podman_storage_defaults -%}
 {%- else -%}
     {%- set defaults = {} -%}
 {%- endif -%}

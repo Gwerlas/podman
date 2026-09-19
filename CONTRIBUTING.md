@@ -72,15 +72,16 @@ the box.
 
 Use the files in the `vars` directory to do it. Each configuration file the
 role renders reads two dictionaries, named after the file : the distribution's
-`podman_<file>_defaults`, set in `vars/`, and the user's `podman_<file>_config`,
-merged over it.
+`_podman_<file>_defaults`, set in `vars/`, and the user's
+`podman_<file>_config`, merged over it. The leading underscore marks what the
+role sets for itself, as it does for every other variable of `vars/`.
 
-| File                              | Distribution                 | User                       |
-| --------------------------------- | ---------------------------- | -------------------------- |
-| `/etc/containers/containers.conf` | `podman_containers_defaults` | `podman_containers_config` |
-| `/etc/containers/registries.conf` | `podman_registries_defaults` | `podman_registries_config` |
-| `/etc/containers/storage.conf`    | `podman_storage_defaults`    | `podman_storage_config`    |
-| `/etc/containers/libpod.conf`     | `podman_libpod_defaults`     | `podman_libpod_config`     |
+| File                              | Distribution                  | User                       |
+| --------------------------------- | ----------------------------- | -------------------------- |
+| `/etc/containers/containers.conf` | `_podman_containers_defaults` | `podman_containers_config` |
+| `/etc/containers/registries.conf` | `_podman_registries_defaults` | `podman_registries_config` |
+| `/etc/containers/storage.conf`    | `_podman_storage_defaults`    | `podman_storage_config`    |
+| `/etc/containers/libpod.conf`     | `_podman_libpod_defaults`     | `podman_libpod_config`     |
 
 Use this facility only if the distribution packages do not work out of the
 box.

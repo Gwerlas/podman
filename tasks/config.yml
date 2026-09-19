@@ -17,7 +17,7 @@
 
     - name: Config - Containers
       when:
-        - podman_containers_defaults is defined or podman_containers_config is defined
+        - _podman_containers_defaults is defined or podman_containers_config is defined
       ansible.builtin.template:
         src: containers.conf.j2
         dest: /etc/containers/containers.conf
@@ -25,7 +25,7 @@
 
     - name: Config - Registries
       when: |
-        podman_registries_defaults is defined or
+        _podman_registries_defaults is defined or
         podman_registries_config is defined or
         podman_mimic_docker
       ansible.builtin.template:
@@ -35,7 +35,7 @@
 
     - name: Config - Storage
       when:
-        - podman_storage_defaults is defined or podman_storage_config is defined
+        - _podman_storage_defaults is defined or podman_storage_config is defined
       ansible.builtin.template:
         src: storage.conf.j2
         dest: /etc/containers/storage.conf
@@ -43,7 +43,7 @@
 
     - name: Config - Libpod
       when:
-        - podman_libpod_defaults is defined or podman_libpod_config is defined
+        - _podman_libpod_defaults is defined or podman_libpod_config is defined
       ansible.builtin.template:
         src: libpod.conf.j2
         dest: /etc/containers/libpod.conf
