@@ -92,6 +92,12 @@
         method: HEAD
         use_proxy: false
 
+    - name: Test the container left out of the units
+      ansible.builtin.uri:
+        url: http://localhost:8081
+        method: HEAD
+        use_proxy: false
+
     - name: Reboot
       become: true
       ansible.builtin.reboot:
@@ -101,3 +107,11 @@
         url: http://localhost:8080
         method: HEAD
         use_proxy: false
+
+    # A container declared `enabled: false` gets a unit file that is never
+    # enabled, so a reboot is the end of it.
+    - name: Check the disabled container did not come back
+      ansible.builtin.wait_for:
+        port: 8081
+        state: stopped
+        timeout: 30

@@ -9,7 +9,6 @@ Requirements
 Install and configure :
 
 - libvirt / QEMU, with a running storage pool
-- python3-jmespath
 - molecule
 - molecule-plugins
 - ansible-lint

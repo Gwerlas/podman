@@ -20,9 +20,6 @@
       retries: "{{ podman_retries }}"
       delay: "{{ podman_delay }}"
       # ... and compare the pulled image ID
-      changed_when: |
-        ((
-          result.image | json_query('[-1].Id')
-        ) != (
-          infos.images | json_query('[-1].Id')
-        ))
+      changed_when: >-
+        (result.image | map(attribute='Id') | list | last | default(None))
+        != (infos.images | map(attribute='Id') | list | last | default(None))

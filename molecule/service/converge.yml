@@ -42,11 +42,21 @@
       - name: docker.io/nginx:latest
         owner: nginx
     podman_containers:
+      # No `enabled` key : its absence has to read as enabled, which the unit
+      # answering on 8080 after a reboot is what proves.
       - run_as: nginx
         name: nginx
         image: docker.io/nginx:latest
-        enabled: true
         publish:
           - 8080:80
+      # `enabled: false` : podman starts this one itself, and its unit is
+      # written but never enabled, so 8081 answers before the reboot and
+      # nothing answers after it.
+      - run_as: nginx
+        name: idle
+        image: docker.io/nginx:latest
+        enabled: false
+        publish:
+          - 8081:80
   roles:
     - gwerlas.podman

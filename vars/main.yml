@@ -28,3 +28,14 @@ packages_computed: |
     ((podman_toolbox_install and 'toolbox' in packages) | ternary(packages.toolbox, [])) |
     flatten
   }}
+
+# podman_containers, with the two keys the filters below read always present :
+# selectattr and rejectattr raise on a container missing one, where a user
+# names run_as and enabled only when they differ from the default.
+_podman_containers: >-
+  {{
+    [{'run_as': None, 'enabled': true}] |
+    product(podman_containers) |
+    map('combine') |
+    list
+  }}

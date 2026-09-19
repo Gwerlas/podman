@@ -6,12 +6,12 @@
         (
           (ansible_facts.user_id == 'root') |
           ternary(
-            podman_containers | json_query('[?run_as!=`root`]'),
-            podman_containers | json_query('[?run_as==`root`]')
-          )
+            _podman_containers | rejectattr('run_as', 'eq', 'root'),
+            _podman_containers | selectattr('run_as', 'eq', 'root')
+          ) | list
         )
       }}
-    enabled_rootless_containers: "{{ rootless_containers | json_query('[?enabled!=`false`]') }}"
+    enabled_rootless_containers: "{{ rootless_containers | rejectattr('enabled', 'false') | list }}"
   when:
     - enabled_rootless_containers | length > 0
     - ansible_facts.service_mgr != "systemd"
@@ -228,7 +228,7 @@
   ansible.builtin.systemd:
     daemon_reload: true
     scope: "{{ (owner != None) | ternary('user', 'system') }}"
-  loop: "{{ podman_containers | map(attribute='run_as', default=None) | unique | list }}"
+  loop: "{{ _podman_containers | map(attribute='run_as') | unique | list }}"
   loop_control:
     loop_var: owner
 
@@ -255,11 +255,7 @@
     state: started
     enabled: true
     scope: "{{ (container.run_as != None) | ternary('user', 'system') }}"
-  loop: |
-    {{
-      podman_containers | json_query('[?enabled != `false`].{
-        name: name,
-        run_as: run_as
-      }') }}
+  loop: "{{ _podman_containers | rejectattr('enabled', 'false') | list }}"
   loop_control:
     loop_var: container
+    label: "{{ container.name }}"
