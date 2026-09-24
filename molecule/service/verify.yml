@@ -108,6 +108,12 @@
         method: HEAD
         use_proxy: false
 
+    - name: Test the container with its own unit name after reboot
+      ansible.builtin.uri:
+        url: http://localhost:8082
+        method: HEAD
+        use_proxy: false
+
     # A container declared `enabled: false` gets a unit file that is never
     # enabled, so a reboot is the end of it.
     - name: Check the disabled container did not come back

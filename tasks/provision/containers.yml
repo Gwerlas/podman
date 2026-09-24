@@ -241,6 +241,8 @@
         container.generate_systemd.container_prefix |
         default('container')
       }}
+    # podman joins the prefix and the name with it, `-` unless told otherwise.
+    separator: "{{ container.generate_systemd.separator | default('-') }}"
     uid: |-
       {{
         ansible_facts.getent_passwd[
@@ -251,7 +253,7 @@
     XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
     DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
   ansible.builtin.systemd:
-    name: "{{ prefix }}-{{ container.name }}"
+    name: "{{ prefix }}{{ separator }}{{ container.name }}"
     state: started
     enabled: true
     scope: "{{ (container.run_as != None) | ternary('user', 'system') }}"
