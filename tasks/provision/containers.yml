@@ -1,14 +1,19 @@
 ---
 - name: Service manager check
   vars:
+    # A container is rootless when whoever runs it is not root : its run_as,
+    # or the connecting user when it names none. So an entry without run_as
+    # is rootless unless the play connects as root.
     rootless_containers: |
       {{
         (
           (ansible_facts.user_id == 'root') |
           ternary(
-            _podman_containers | rejectattr('run_as', 'eq', 'root'),
-            _podman_containers | selectattr('run_as', 'eq', 'root')
-          ) | list
+            _podman_containers | rejectattr('run_as', 'none'),
+            _podman_containers
+          ) |
+          rejectattr('run_as', 'eq', 'root') |
+          list
         )
       }}
     enabled_rootless_containers: "{{ rootless_containers | rejectattr('enabled', 'false') | list }}"
