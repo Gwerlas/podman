@@ -233,10 +233,13 @@ Leave it out and the container runs as the user the play runs as — `root` unde
 starts the container itself and writes the unit without enabling it, so the
 container does not come back after a reboot.
 
-`run_as` and `enabled` are this role's own. The other keys are options of the
+`run_as` and `enabled` are this role's own. Every other key is an option of the
 [`containers.podman.podman_container`][podman_container module] module, passed
-on as they are — those [the role lists](tasks/provision/containers.yml), and no
-others.
+on as it is : whatever the installed collection supports is available, and a
+key it does not know fails the play.
+
+`module_defaults` set for `containers.podman.podman_container` do not reach
+these containers : write the options in each entry.
 
 [podman_container module]: https://docs.ansible.com/ansible/latest/collections/containers/podman/podman_container_module.html
 

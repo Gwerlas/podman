@@ -116,6 +116,17 @@
           - mine_unit.status.UnitFileState == 'enabled'
         fail_msg: "UnitFileState={{ mine_unit.status.UnitFileState }}"
 
+    - name: Read the container of the user the play runs as
+      containers.podman.podman_container_info:
+        name: mine
+      register: mine_info
+
+    - name: Check an option the role does not name reached it
+      ansible.builtin.assert:
+        that:
+          - mine_info.containers[0].Config.Umask == '0077'
+        fail_msg: "Umask={{ mine_info.containers[0].Config.Umask }}"
+
     - name: Reboot
       become: true
       ansible.builtin.reboot:

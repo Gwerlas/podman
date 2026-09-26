@@ -73,9 +73,12 @@
           - 8082:80
       # No `run_as` : it runs as the user the play runs as, and its unit goes
       # to that user's instance. That user does not linger, so 8083 is only
-      # checked before the reboot, next to the unit being enabled.
+      # checked before the reboot, next to the unit being enabled. `umask` is
+      # an option the role does not name anywhere : it reaches the container
+      # only if the whole entry reaches the module.
       - name: mine
         image: docker.io/nginx:latest
+        umask: "0077"
         publish:
           - 8083:80
       # `run_as: root` : its unit goes to the system instance, which brings

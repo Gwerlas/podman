@@ -28,6 +28,7 @@ workflow:
           - .gitlab-ci.yml
           - .markdownlint.yaml
           - "**/*.md"
+          - action_plugins/**/*
           - defaults/**/*
           - filter_plugins/**/*
           - handlers/**/*
@@ -60,6 +61,7 @@ ansible-lint:
         paths:
           - .config/**/*
           - .gitlab-ci.yml
+          - action_plugins/**/*
           - defaults/**/*
           - filter_plugins/**/*
           - handlers/**/*
@@ -131,6 +133,7 @@ tagged-run:
         compare_to: refs/heads/main
         paths:
           - .gitlab-ci.yml
+          - action_plugins/**/*
           - defaults/**/*
           - filter_plugins/**/*
           - handlers/**/*

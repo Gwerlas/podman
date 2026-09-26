@@ -29,13 +29,19 @@ packages_computed: |
     flatten
   }}
 
-# podman_containers, with the two keys the filters below read always present :
-# selectattr and rejectattr raise on a container missing one, where a user
-# names run_as and enabled only when they differ from the default. A container
-# without run_as runs as the user the play runs as.
+# The keys of a podman_containers entry that are the role's own, not
+# podman_container's, with their defaults. A container without run_as runs as
+# the user the play runs as.
+_podman_containers_own_keys:
+  run_as: "{{ ansible_facts.user_id }}"
+  enabled: true
+
+# podman_containers, with the role's own keys always present : selectattr and
+# rejectattr raise on a container missing one, where a user names them only
+# when they differ from the default.
 _podman_containers: >-
   {{
-    [{'run_as': ansible_facts.user_id, 'enabled': true}] |
+    [_podman_containers_own_keys] |
     product(podman_containers) |
     map('combine') |
     list
