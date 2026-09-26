@@ -1,6 +1,8 @@
 # Ansible managed - do not edit
 
 net-firewall/iptables nftables
+# netavark reads and writes the ruleset as JSON, through nft -j
+net-firewall/nftables json
 
 {% if podman_mimic_docker | bool %}
 app-containers/podman   wrapper

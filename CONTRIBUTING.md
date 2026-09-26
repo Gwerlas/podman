@@ -134,8 +134,8 @@ before the installation.
 `tasks/packages/portage.yml` is the current example : it writes the USE flags in
 `/etc/portage/package.use/podman` **before** the first `emerge`, so Podman is
 built right away with the expected features, and notifies the `Rebuild`
-handler so an already installed Podman is rebuilt with `--newuse` when the
-flags change.
+handler so an already installed Podman, and whichever of its dependencies
+the flags name, is rebuilt with `--newuse --deep` when the flags change.
 
 Run tests
 ---------

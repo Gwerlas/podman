@@ -8,3 +8,14 @@
         name: test
         image: hello-world
         detach: false
+
+    # A published port has netavark write firewall rules, through the driver
+    # the distribution defaults pick.
+    - name: Hello world as root, on a published port
+      become: true
+      containers.podman.podman_container:
+        name: test-rootful
+        image: hello-world
+        detach: false
+        publish:
+          - 8080:80
