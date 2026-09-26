@@ -30,6 +30,8 @@
     podman_retries: 10
     podman_delay: 3
     podman_users:
+      # The user the play runs as, which owns the container without run_as.
+      - name: "{{ ansible_facts.user_id }}"
       - name: myapp
       - name: nginx
         home: /data/web
@@ -69,5 +71,19 @@
           separator: _
         publish:
           - 8082:80
+      # No `run_as` : it runs as the user the play runs as, and its unit goes
+      # to that user's instance. That user does not linger, so 8083 is only
+      # checked before the reboot, next to the unit being enabled.
+      - name: mine
+        image: docker.io/nginx:latest
+        publish:
+          - 8083:80
+      # `run_as: root` : its unit goes to the system instance, which brings
+      # 8084 back after the reboot without any lingering.
+      - run_as: root
+        name: rootful
+        image: docker.io/nginx:latest
+        publish:
+          - 8084:80
   roles:
     - gwerlas.podman

@@ -98,6 +98,24 @@
         method: HEAD
         use_proxy: false
 
+    - name: Test the container of the user the play runs as
+      ansible.builtin.uri:
+        url: http://localhost:8083
+        method: HEAD
+        use_proxy: false
+
+    - name: Read the unit of the container of the user the play runs as
+      ansible.builtin.systemd:
+        name: container-mine
+        scope: user
+      register: mine_unit
+
+    - name: Check that unit is enabled in that user's instance
+      ansible.builtin.assert:
+        that:
+          - mine_unit.status.UnitFileState == 'enabled'
+        fail_msg: "UnitFileState={{ mine_unit.status.UnitFileState }}"
+
     - name: Reboot
       become: true
       ansible.builtin.reboot:
@@ -111,6 +129,12 @@
     - name: Test the container with its own unit name after reboot
       ansible.builtin.uri:
         url: http://localhost:8082
+        method: HEAD
+        use_proxy: false
+
+    - name: Test the rootful container after reboot
+      ansible.builtin.uri:
+        url: http://localhost:8084
         method: HEAD
         use_proxy: false
 

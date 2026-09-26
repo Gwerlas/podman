@@ -206,6 +206,40 @@ user instance starts with the machine. The rootless units generated for
 has a session open, and `enabled: true` on a container means "until they log
 out".
 
+### Provisioned containers
+
+Each entry of `podman_containers` is a container, with a systemd unit to run
+it :
+
+```yaml
+podman_containers:
+  - name: web              # Container name (required)
+    image: docker.io/nginx:latest
+    run_as: nginx          # The user the play runs as by default
+    enabled: true          # Start the unit at boot, true by default
+    generate_systemd:      # How podman writes the unit
+      container_prefix: app
+    publish:
+      - 8080:80
+```
+
+`run_as` is the user that owns the container. `root` gets a system unit, in
+`/etc/systemd/system/` ; anyone else a user unit, in `~/.config/systemd/user/`,
+which runs at boot only for a [lingering user](#containers-running-at-boot).
+Leave it out and the container runs as the user the play runs as — `root` under
+`become: true`.
+
+`enabled: true` enables the unit and starts it. With `enabled: false`, podman
+starts the container itself and writes the unit without enabling it, so the
+container does not come back after a reboot.
+
+`run_as` and `enabled` are this role's own. The other keys are options of the
+[`containers.podman.podman_container`][podman_container module] module, passed
+on as they are — those [the role lists](tasks/provision/containers.yml), and no
+others.
+
+[podman_container module]: https://docs.ansible.com/ansible/latest/collections/containers/podman/podman_container_module.html
+
 ### Podman configuration
 
 By default, we let the configuration files of the distribution inchanged,
