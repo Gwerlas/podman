@@ -76,8 +76,12 @@ the role changes on its own ; keep that list in step.
 Those corrections go in the files of the `vars` directory. Each configuration
 file the role renders reads two dictionaries, named after the file : the
 distribution's `_podman_<file>_defaults`, set in `vars/`, and the user's
-`podman_<file>_config`, merged over it. The leading underscore marks what the
-role sets for itself, as it does for every other variable of `vars/`.
+`podman_<file>_config`, merged over it. `storage.conf` reads a third one
+beneath them, `_podman_storage_base`, also set in `vars/` : the file replaces
+the distribution's instead of adding to it, so it has to carry the keys podman
+cannot run without once it exists, as `vars/debian-like.yml` does. The leading
+underscore marks what the role sets for itself, as it does for every other
+variable of `vars/`.
 
 | File                              | Distribution                  | User                       |
 | --------------------------------- | ----------------------------- | -------------------------- |

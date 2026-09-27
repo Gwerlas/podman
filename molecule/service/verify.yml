@@ -38,16 +38,29 @@
         src: /etc/containers/storage.conf
       register: storage_conf
 
-    - name: Check the driver section landed, and no empty table with it
+    # The file replaces the distribution's : the store podman runs on has to
+    # survive the user's one option where podman needs it written down — on
+    # the Debian family — and nowhere else ; no table is ever empty.
+    - name: Check the driver section landed over a whole store, and no empty table
       vars:
         lines: "{{ (storage_conf.content | b64decode).split('\n') }}"
+        debian_like: "{{ 'debian_like' in group_names }}"
       ansible.builtin.assert:
         that:
           - "'[storage.options.overlay]' in lines"
           - "'mountopt = \"nodev\"' in lines"
-          - "'[storage]' not in lines"
+          - "('[storage]' in lines) == debian_like"
+          - "('runroot = \"/run/containers/storage\"' in lines) == debian_like"
           - "'[storage.options]' not in lines"
         fail_msg: "rendered : {{ lines }}"
+
+    # #28 : on the Debian family, a storage.conf without runroot left rootful
+    # podman unable to read its own configuration.
+    - name: Check rootful podman reads its storage configuration
+      become: true
+      ansible.builtin.command:
+        cmd: podman info --format '{{ "{{" }} .Store.RunRoot {{ "}}" }}'
+      changed_when: false
 
     - name: Read the rendered containers configuration
       become: true

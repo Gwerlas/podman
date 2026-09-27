@@ -373,15 +373,23 @@ podman_storage_config:
         mountopt: "nodev"
 ```
 
-Will generate the `/etc/containers/storage.conf` bellow :
+Will generate the `/etc/containers/storage.conf` bellow, on Debian 12 :
 
 ```ini
 [storage]
 driver = "zfs"
+runroot = "/run/containers/storage"
+graphroot = "/var/lib/containers/storage"
 
 [storage.options.zfs]
 mountopt = "nodev"
 ```
+
+This file replaces the one your distribution ships instead of adding to it. On
+Debian and Ubuntu, podman below version 6 then needs a `runroot` and a
+`graphroot` it would otherwise find on its own : the role writes podman's own.
+Set a key to `null` to leave it out, knowing that podman does not start without
+them.
 
 #### Libpod
 
