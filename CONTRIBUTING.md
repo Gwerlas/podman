@@ -66,12 +66,16 @@ baseline is a gap in the role, not something prepare should paper over.
 
 ### Distribution defaults
 
-You can define some defaults if the distribution packages do not work out of
-the box.
+An empty inventory installs Podman, sets up rootless mode for the user running
+the play, and changes nothing else : the distribution's configuration is the
+reference, and the role corrects it only where its packages do not work out of
+the box. A value the role would merely prefer, or upstream's default where the
+distribution chose otherwise, has no place in `vars/`. `README.md` lists what
+the role changes on its own ; keep that list in step.
 
-Use the files in the `vars` directory to do it. Each configuration file the
-role renders reads two dictionaries, named after the file : the distribution's
-`_podman_<file>_defaults`, set in `vars/`, and the user's
+Those corrections go in the files of the `vars` directory. Each configuration
+file the role renders reads two dictionaries, named after the file : the
+distribution's `_podman_<file>_defaults`, set in `vars/`, and the user's
 `podman_<file>_config`, merged over it. The leading underscore marks what the
 role sets for itself, as it does for every other variable of `vars/`.
 
@@ -81,9 +85,6 @@ role sets for itself, as it does for every other variable of `vars/`.
 | `/etc/containers/registries.conf` | `_podman_registries_defaults` | `podman_registries_config` |
 | `/etc/containers/storage.conf`    | `_podman_storage_defaults`    | `podman_storage_config`    |
 | `/etc/containers/libpod.conf`     | `_podman_libpod_defaults`     | `podman_libpod_config`     |
-
-Use this facility only if the distribution packages do not work out of the
-box.
 
 Look at the `vars/debian11.yml` for example.
 

@@ -7,6 +7,23 @@ Install and configure podman in rootless mode.
 
 GitLab project : [yoanncolin/ansible/roles/podman](https://gitlab.com/yoanncolin/ansible/roles/podman)
 
+What it changes
+---------------
+
+With no variable set, the role installs Podman and leaves the configuration
+your distribution ships as it is, but for two things :
+
+- rootless mode is set up for the user running the play — subordinate ids,
+  directories, and the SELinux label of the container store where SELinux is
+  enforced. That is what the role is for ; set `podman_users` to an empty list
+  to skip it ;
+- where the distribution's packages do not work out of the box, the role
+  fixes what stops them, and nothing more — the cgroup manager and the log
+  driver on Debian 11, the firewall driver on Gentoo, the user namespaces on
+  EL 7.
+
+Everything else happens only when You describe it.
+
 Requirements
 ------------
 
