@@ -18,10 +18,11 @@ packages:
 
 # Debian 12 and Ubuntu ship no storage.conf : podman runs on its built-in
 # values. Once the role writes the file, podman below 6 no longer falls back on
-# them — "runroot must be set". The base holds podman's own paths, which Debian
-# 13 sets in its file too. No driver : the packages start podman before the
-# role writes the file, and the store records the driver it was created with —
-# none — then refuses any other (#31). Podman only warns that none is set.
+# them — "runroot must be set". The base holds podman's own paths. No driver :
+# the packages start podman before the role writes the file, and the store
+# records the driver it was created with — none — then refuses any other (#31).
+# Podman only warns that none is set. Debian 13 carries over its own file
+# instead (vars/debian13.yml).
 _podman_storage_base:
   storage:
     runroot: /run/containers/storage

@@ -385,11 +385,13 @@ graphroot = "/var/lib/containers/storage"
 mountopt = "nodev"
 ```
 
-This file replaces the one your distribution ships instead of adding to it. On
-Debian and Ubuntu, podman below version 6 then needs a `runroot` and a
-`graphroot` it would otherwise find on its own : the role writes podman's own.
-Set a key to `null` to leave it out, knowing that podman does not start without
-them.
+This file replaces the one your distribution ships instead of adding to it, so
+the role carries over what that file sets — `metacopy=on` on Fedora, for
+instance — and applies your settings over it. Where the distribution ships
+none, as Debian 12 and Ubuntu, podman below version 6 still needs a `runroot`
+and a `graphroot` once the file exists : the role writes podman's own. Set a
+key to `null` to leave it out, knowing that podman may not start without some
+of them.
 
 #### Libpod
 

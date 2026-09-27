@@ -1,0 +1,13 @@
+---
+# What containers-common's storage.conf sets, carried over when the role writes
+# its own (see templates/storage.conf.j2).
+_podman_storage_base:
+  storage:
+    driver: overlay
+    runroot: /run/containers/storage
+    graphroot: /var/lib/containers/storage
+    options:
+      pull_options:
+        enable_partial_images: "false"
+      overlay:
+        mountopt: nodev,metacopy=on

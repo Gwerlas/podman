@@ -2,9 +2,10 @@
 {# This file replaces the one the distribution ships rather than adding to it :
     "The storage.conf file overrides all other storage.conf files."
     (containers-storage.conf(5)). It therefore starts from
-    _podman_storage_base, the keys podman cannot run without once the file
-    exists, set in the distribution's vars file, with the distribution's fixes
-    and the user's config over it. -#}
+    _podman_storage_base, set in the distribution's vars file : what that file
+    sets or, where the distribution ships none, the keys podman cannot run
+    without once the file exists. The distribution's fixes and the user's
+    config go over it. -#}
 {% if _podman_storage_base is defined -%}
     {%- set base = _podman_storage_base -%}
 {%- else -%}
@@ -27,9 +28,10 @@
 {%- set data = base | combine(defaults, config, recursive=true) -%}
 {%- set storage = data.storage | default({}, true) -%}
 {%- set options = storage.options | default({}, true) -%}
-{#- The driver sections of [storage.options], rendered on their own below
-    rather than as keys of the table that holds them. -#}
-{%- set sections = ['aufs', 'btrfs', 'thinpool', 'overlay', 'vfs', 'zfs'] -%}
+{#- The tables of [storage.options] — the driver sections and pull_options —
+    rendered on their own below rather than as keys of the table that holds
+    them. -#}
+{%- set sections = ['aufs', 'btrfs', 'thinpool', 'overlay', 'pull_options', 'vfs', 'zfs'] -%}
 {#- A table is written only when it holds a key of its own. An empty [storage]
     is not harmless : podman warns that no driver is set and picks one itself. -#}
 {%- set storage_keys = storage | dict2items | rejectattr('value', 'none') | map(attribute='key') | reject('eq', 'options') | list -%}

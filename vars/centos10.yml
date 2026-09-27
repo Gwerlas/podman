@@ -1,0 +1,10 @@
+---
+# CentOS Stream runs ahead of the EL 10 it prepares : it already has podman 6,
+# whose /usr/share/containers/storage.conf sets far less than AlmaLinux 10's.
+# What it sets, carried over when the role writes its own storage.conf (see
+# templates/storage.conf.j2).
+_podman_storage_base:
+  storage:
+    options:
+      overlay:
+        mountopt: nodev

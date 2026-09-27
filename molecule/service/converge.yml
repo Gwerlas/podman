@@ -6,12 +6,13 @@
   hosts: all
   vars:
     # Nothing else renders storage.conf, and a template no scenario reaches is
-    # a template that breaks unnoticed.
+    # a template that breaks unnoticed. A key no distribution ships : what
+    # they ship has to show beside it, not under it.
     podman_storage_config:
       storage:
         options:
           overlay:
-            mountopt: nodev
+            skip_mount_home: "true"
     # bullseye's vars file sets containers.log_driver and engine.cgroup_manager :
     # one table takes a key next to the distribution's, the other loses the key
     # set to null.

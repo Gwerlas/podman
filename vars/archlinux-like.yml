@@ -13,3 +13,11 @@ packages:
     - podman
   rootless:
     - acl
+
+# What /usr/share/containers/storage.conf sets, carried over when the role
+# writes its own storage.conf (see templates/storage.conf.j2).
+_podman_storage_base:
+  storage:
+    options:
+      overlay:
+        mountopt: nodev

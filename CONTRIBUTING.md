@@ -78,10 +78,12 @@ file the role renders reads two dictionaries, named after the file : the
 distribution's `_podman_<file>_defaults`, set in `vars/`, and the user's
 `podman_<file>_config`, merged over it. `storage.conf` reads a third one
 beneath them, `_podman_storage_base`, also set in `vars/` : the file replaces
-the distribution's instead of adding to it, so it has to carry the keys podman
-cannot run without once it exists, as `vars/debian-like.yml` does. The leading
-underscore marks what the role sets for itself, as it does for every other
-variable of `vars/`.
+the distribution's instead of adding to it, so it has to carry what that file
+sets. Copy its keys as the distribution ships them — leaving out empty lists and
+tables — and add nothing it does not set. Where the distribution ships no file
+and podman cannot run on one lacking some keys, the base holds podman's own
+values for them, as `vars/debian-like.yml` does. The leading underscore marks
+what the role sets for itself, as it does for every other variable of `vars/`.
 
 | File                              | Distribution                  | User                       |
 | --------------------------------- | ----------------------------- | -------------------------- |

@@ -1,0 +1,12 @@
+---
+# What /usr/share/containers/storage.conf (containers-storage) sets, carried
+# over when the role writes its own storage.conf (see
+# templates/storage.conf.j2). Without runroot, rootful podman does not start.
+_podman_storage_base:
+  storage:
+    driver: overlay
+    runroot: /run/containers/storage
+    graphroot: /var/lib/containers/storage
+    options:
+      overlay:
+        mountopt: nodev
