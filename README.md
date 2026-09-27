@@ -122,7 +122,7 @@ Tags
 
 You can filter on some specific tasks using this tags :
 
-- `packages`
+- `packages` : Packages, and the configuration written before them
 - `provision` : Provisioned containers, images and networks
 - `users` : Rootless directories, subgids and subuids
 - `wrappers` : [Wrappers](#wrappers)
@@ -388,10 +388,17 @@ mountopt = "nodev"
 This file replaces the one your distribution ships instead of adding to it, so
 the role carries over what that file sets — `metacopy=on` on Fedora, for
 instance — and applies your settings over it. Where the distribution ships
-none, as Debian 12 and Ubuntu, podman below version 6 still needs a `runroot`
-and a `graphroot` once the file exists : the role writes podman's own. Set a
-key to `null` to leave it out, knowing that podman may not start without some
-of them.
+none, as Debian 12 and Ubuntu, podman below version 6 still needs a `driver`,
+a `runroot` and a `graphroot` once the file exists : the role writes podman's
+own. Set a key to `null` to leave it out, knowing that podman may not start
+without some of them, and that below version 6 it ignores the driver's options
+when no driver is named.
+
+The role writes its configuration before it installs podman, so the rootful
+store is created under it. An Ubuntu 24.04 host provisioned before that has a
+store that recorded no driver, and refuses the one this file names —
+`database configuration mismatch`. `podman system reset` recreates that store,
+and deletes its containers and images with it.
 
 #### Libpod
 

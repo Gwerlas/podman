@@ -32,20 +32,27 @@
           store={{ rootless_store.stat.selinux_context | default('?') }}
           home={{ rootless_home.stat.selinux_context | default('?') }}
 
-    # What rootful podman makes of the distribution's own storage.conf, where
-    # it ships one under /usr/share : the reference the role's file has to
-    # keep. That file is mounted over the role's in a private mount namespace,
-    # so podman reads it with the drop-ins it would read beside it — which
-    # CONTAINERS_STORAGE_CONF skips. EL 9 ships its file in /etc, the one the
-    # role replaces, and Debian 12 and Ubuntu ship none, so there is no
-    # reference to compare with there.
+    # The reference the role's file has to keep : what rootful podman makes of
+    # the distribution's own storage.conf, mounted over the role's in a private
+    # mount namespace, so podman reads it with the drop-ins it would read beside
+    # it — which CONTAINERS_STORAGE_CONF skips. The file lives under
+    # /usr/share, or, on EL 9, in the .rpmnew rpm leaves next to the role's.
+    # Where the distribution ships none, a tmpfs over /etc/containers leaves
+    # podman its built-in values.
     - name: Look for the distribution's storage configuration
       ansible.builtin.stat:
-        path: /usr/share/containers/storage.conf
+        path: "{{ item }}"
+      loop:
+        - /usr/share/containers/storage.conf
+        - /etc/containers/storage.conf.rpmnew
       register: shipped_storage
 
+    - name: Name the distribution's storage configuration
+      ansible.builtin.set_fact:
+        shipped_file: >-
+          {{ shipped_storage.results | selectattr('stat.exists') | map(attribute='item') | first | default('') }}
+
     - name: Ask rootful podman its store under the distribution's configuration
-      when: shipped_storage.stat.exists
       become: true
       ansible.builtin.command:
         argv:
@@ -54,7 +61,13 @@
           - sh
           - -c
           - >-
-            mount --bind /usr/share/containers/storage.conf /etc/containers/storage.conf
+            {{
+              (shipped_file | length > 0) |
+              ternary(
+                'mount --bind ' ~ shipped_file ~ ' /etc/containers/storage.conf',
+                'mount -t tmpfs tmpfs /etc/containers'
+              )
+            }}
             && exec podman info --format json
       changed_when: false
       register: shipped_info
@@ -71,52 +84,48 @@
     - name: Check the user's option applies over the distribution's store
       vars:
         store: "{{ (rootful_info.stdout | from_json).store }}"
-        shipped: "{{ shipped_storage.stat.exists | ternary((shipped_info.stdout | default('{}') | from_json).store | default({}), {}) }}"
-        # Debian 12 and Ubuntu ship no storage.conf and the role's names no
-        # driver there, so podman says none is set on every call (#31).
-        driverless: "{{ ansible_facts.os_family == 'Debian' and not shipped_storage.stat.exists }}"
+        shipped: "{{ (shipped_info.stdout | from_json).store }}"
         complaints: "{{ rootful_info.stderr_lines | select('search', 'storage') | list }}"
       ansible.builtin.assert:
         that:
           - store.graphOptions['overlay.skip_mount_home'] | default('') == 'true'
-          - (shipped.graphOptions | default({}) | dict2items) | difference(store.graphOptions | dict2items) == []
-          - shipped.graphDriverName | default(store.graphDriverName) == store.graphDriverName
-          - shipped.graphRoot | default(store.graphRoot) == store.graphRoot
-          - shipped.runRoot | default(store.runRoot) == store.runRoot
-          - driverless or complaints == []
+          - (shipped.graphOptions | dict2items) | difference(store.graphOptions | dict2items) == []
+          - shipped.graphDriverName == store.graphDriverName
+          - shipped.graphRoot == store.graphRoot
+          - shipped.runRoot == store.runRoot
+          - complaints == []
         fail_msg: >-
           store={{ store | to_json }}
           shipped={{ shipped | to_json }}
           complaints={{ complaints }}
 
-    # podman info does not report pull_options : that one is compared in the
-    # files, where the distribution ships it under /usr/share.
-    - name: Read the storage configurations
-      when: shipped_storage.stat.exists
+    # podman info does not report pull_options : that table is compared in the
+    # files, one `key = value` line at a time.
+    - name: Read the pull options of the distribution's file and the role's
+      when: shipped_file | length > 0
       become: true
-      ansible.builtin.slurp:
-        src: "{{ item }}"
+      ansible.builtin.command:
+        argv:
+          - awk
+          - >-
+            /^\[/ { in_table = ($0 == "[storage.options.pull_options]") }
+            in_table && /^[a-z_]+ *=/
+          - "{{ item }}"
+      changed_when: false
       loop:
-        - /usr/share/containers/storage.conf
+        - "{{ shipped_file }}"
         - /etc/containers/storage.conf
-      register: storage_files
+      register: pull_options
 
     - name: Check the distribution's pull options survive
-      when: shipped_storage.stat.exists
+      when: shipped_file | length > 0
       vars:
-        table: '\[storage\.options\.pull_options\]\n((?:[^\[\n][^\n]*\n?|\n)*)'
-        keys: >-
-          {{
-            storage_files.results |
-            map(attribute='content') | map('b64decode') |
-            map('regex_findall', table) | map('join', '') |
-            map('regex_findall', '[^\n]+') | map('map', 'trim') |
-            map('reject', 'match', '#') | map('list') | list
-          }}
+        shipped: "{{ pull_options.results[0].stdout_lines }}"
+        rendered: "{{ pull_options.results[1].stdout_lines }}"
       ansible.builtin.assert:
         that:
-          - keys[0] | difference(keys[1]) == []
-        fail_msg: "shipped={{ keys[0] }} rendered={{ keys[1] }}"
+          - shipped | difference(rendered) == []
+        fail_msg: "shipped={{ shipped }} rendered={{ rendered }}"
 
     - name: Read the rendered containers configuration
       become: true

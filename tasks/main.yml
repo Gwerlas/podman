@@ -6,13 +6,19 @@
     - always
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/facts.yml"
 
+# The configuration before the packages : Debian's and Ubuntu's start podman
+# as they install it, and the first run creates the rootful store under
+# whatever configuration exists, pinning the graph driver it finds there. It
+# carries the packages tag so a run limited to that tag keeps the order.
+- name: Configuration
+  tags:
+    - packages
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/config.yml"
+
 - name: Packages
   tags:
     - packages
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/packages.yml"
-
-- name: Configuration
-  ansible.builtin.import_tasks: "{{ role_path }}/tasks/config.yml"
 
 - name: Rootless mode
   tags:
