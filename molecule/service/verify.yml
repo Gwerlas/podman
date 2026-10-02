@@ -99,6 +99,26 @@
           shipped={{ shipped | to_json }}
           complaints={{ complaints }}
 
+    # Podman 6 applies a graphroot of storage.conf to rootless users too, which
+    # earlier versions ignored (containers-storage.conf(5) :
+    # https://github.com/containers/storage/blob/main/docs/containers-storage.conf.5.md).
+    # Whatever the role writes, each mode has to keep its own store.
+    - name: Ask podman the store of a rootless user
+      become: true
+      become_user: myapp
+      containers.podman.podman_system_info:
+      register: rootless_info
+
+    - name: Check root and a rootless user each keep their own store
+      vars:
+        rootless_graph_root: "{{ rootless_info.podman_system_info.store.graphRoot }}"
+        rootful_graph_root: "{{ (rootful_info.stdout | from_json).store.graphRoot }}"
+      ansible.builtin.assert:
+        that:
+          - rootless_graph_root.startswith('/home/myapp/')
+          - rootful_graph_root == '/var/lib/containers/storage'
+        fail_msg: "rootless={{ rootless_graph_root }} rootful={{ rootful_graph_root }}"
+
     # podman info does not report pull_options : that table is compared in the
     # files, one `key = value` line at a time.
     - name: Read the pull options of the distribution's file and the role's
