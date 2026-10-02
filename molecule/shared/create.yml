@@ -143,10 +143,14 @@
 
         # Safe while a VM exists: a VM disk is cloned with createXMLFrom, a
         # full copy, so no domain is backed by the image it came from.
+        #
+        # The whole name is matched, not its `molecule-image-<host>-` prefix:
+        # `gentoo-testing` begins with `gentoo-`, so the prefix of `gentoo`
+        # would also take the base image of `gentoo-testing`.
         - name: Remove superseded base images
           when:
             - stale_image != image_name
-            - stale_image.startswith('molecule-image-' ~ inventory_hostname ~ '-')
+            - stale_image is match('molecule-image-' ~ (inventory_hostname | regex_escape) ~ '-[0-9a-f]{8}[.]qcow2$')
           community.libvirt.virt_volume:
             pool: "{{ libvirt_pool }}"
             command: delete

@@ -43,8 +43,53 @@
   failed_when: false
   register: podman_version_probe
 
+# Portage installs what the tree resolves to, which depends on the keywords the
+# host accepts : the stable branch carries podman 5 and the testing one podman 6.
+# `emerge --pretend` resolves like the install does, where `portageq
+# best_visible` reads the package alone and ignores its masked dependencies.
+- name: Get the version Portage would install
+  when:
+    - ansible_facts.pkg_mgr == "portage"
+    - podman_version_probe.rc != 0
+  become: true
+  ansible.builtin.command:
+    cmd: emerge --pretend --noreplace --nospinner --color n app-containers/podman
+  changed_when: false
+  check_mode: false
+  failed_when: false
+  register: podman_portage_probe
+
+# One task, so a fact cannot read another of them : the expected version comes
+# from the probes, not from podman_version. podman_labels_store stays a task of
+# its own above, because podman_packages reads it through packages_computed.
 - name: Facts - Global
+  vars:
+    podman_installed_version: >-
+      {{ (podman_version_probe.rc == 0) | ternary(podman_version_probe.stdout.split(' ')[2], None) }}
   ansible.builtin.set_fact:
     cacheable: true
-    podman_version: "{{ (podman_version_probe.rc == 0) | ternary(podman_version_probe.stdout.split(' ')[2], None) }}"
+    podman_version: "{{ podman_installed_version }}"
     podman_packages: "{{ packages_computed }}"
+    _podman_expected_version: >-
+      {{
+        podman_installed_version
+        if podman_installed_version is not none
+        else (podman_portage_probe.stdout | default('') | regex_findall('app-containers/podman-([0-9][0-9.]*)') | first | default(''))
+      }}
+
+# Without a version the role cannot tell which of the two bases to write, and
+# the wrong one breaks either rootless podman (6) or podman itself (5). The exit
+# status says nothing here : the USE flags the role writes come after this probe,
+# so a first run exits 1 on "USE changes are necessary" and still names the
+# version, which the flags do not change.
+- name: Refuse a Portage that does not resolve podman
+  when:
+    - ansible_facts.pkg_mgr == "portage"
+    - podman_version is none
+    - _podman_expected_version | length == 0
+  vars:
+    podman_probe_tail: >-
+      {{ ((podman_portage_probe.stdout_lines + podman_portage_probe.stderr_lines) | select | list)[-10:] | join(' | ') }}
+  ansible.builtin.fail:
+    msg: |-
+      Portage did not resolve app-containers/podman (emerge exited with {{ podman_portage_probe.rc }}), so the role cannot tell which version it will install, nor which storage.conf that version needs. Fix what emerge reports, then run the role again : {{ podman_probe_tail }}

@@ -19,12 +19,13 @@ _podman_containers_defaults:
   network:
     firewall_driver: nftables
 
-# What /usr/share/containers/storage.conf sets on stable Gentoo, where it comes
-# from containers-storage, carried over when the role writes its own
-# storage.conf (see templates/storage.conf.j2). The testing branch's podman 6
-# takes it from container-libs, which sets the mount option alone : podman 6
-# reads the driver's options without a driver, podman 5 does not.
-_podman_storage_base:
+# What the distribution's storage.conf sets, carried over when the role writes
+# its own (see templates/storage.conf.j2). Stable Gentoo's podman 5 takes the
+# file from containers-storage, which sets the driver and both roots. The testing
+# branch's podman 6 takes it from container-libs, which sets the mount option
+# alone : podman 6 applies a graphroot to rootless users too, and reads the
+# driver's options without a driver.
+_podman_storage_base_podman5:
   storage:
     driver: overlay
     runroot: /run/containers/storage
@@ -32,3 +33,16 @@ _podman_storage_base:
     options:
       overlay:
         mountopt: nodev
+
+_podman_storage_base_podman6:
+  storage:
+    options:
+      overlay:
+        mountopt: nodev
+
+_podman_storage_base: >-
+  {{
+    _podman_storage_base_podman6
+    if _podman_expected_version is version('6', '>=')
+    else _podman_storage_base_podman5
+  }}

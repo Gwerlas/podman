@@ -45,6 +45,13 @@ share one file rather than repeating it — `service` and `wrapper` link their
 `molecule.yml` to `default`'s, and what makes a scenario itself is said in its
 `converge.yml`. Break a link the day the lists have to differ, not before.
 
+`gentoo-testing` is the Gentoo image again, with the testing branch (`~amd64`)
+accepted for podman by `prepare.yml`, because that is where podman 6 is while
+the stable branch carries podman 5. It is a platform of `platforms.yml` for the
+image and nothing else : it has no `galaxy:` key, as Galaxy lists a distribution
+once. `default`'s `molecule.yml` lists it next to `gentoo`, which keeps covering
+the stable branch, and the scenarios linked to it boot both.
+
 Supported does not mean current : a platform stays in the list as long as we
 can still test it, whatever its upstream end of life. What we cannot do is
 guarantee one whose packages are no longer reachable, and that is where an
@@ -58,8 +65,9 @@ Molecule ignores that directory as a scenario because it carries no
 `molecule.yml`.
 
 `prepare.yml` stays minimal on purpose : it upgrades the system, points an
-archived Debian at `archive.debian.org`, enables the Gentoo binhost, reboots
-when a new kernel came, and stops there. Nothing converges `gwerlas.system` —
+archived Debian at `archive.debian.org`, enables the Gentoo binhost, accepts the
+testing branch on `gentoo-testing`, reboots when a new kernel came, and stops
+there. Nothing converges `gwerlas.system` —
 this role only imports its user management — so a converge exercises Podman on
 a stock cloud image, which is the point. What a platform needs beyond that
 baseline is a gap in the role, not something prepare should paper over.
@@ -187,10 +195,10 @@ podman run --rm -v "$PWD":/role:Z -w /role gwerlas/ansible:debian sh -c '
 and the package manager work, which a container is not. A change to what those
 two tags run is checked by limiting a converge to them by hand.
 
-Every scenario boots the same platform list, catalogued in
+Every scenario boots the platform list catalogued in
 [`molecule/shared/platforms.yml`](molecule/shared/platforms.yml). Comment out
 what you don't need in a scenario's `molecule.yml` while developing : a full
-run is thirteen VMs.
+run is fourteen VMs.
 
 Gentoo is the slow one, and it cannot be helped : the official binhost is built
 against an OpenRC profile, so its Podman carries `-systemd` and is refused by
@@ -218,8 +226,8 @@ is passed through).
 
 `MOLECULE_MEMORY` and `MOLECULE_VCPUS` override what the scenario asks for,
 which is what you want when a run compiles rather than installs. They apply to
-every platform of the run, so pair them with `-p` : `default` creates thirteen
-VMs, and thirteen times sixteen gigabytes is not a number your workstation has.
+every platform of the run, so pair them with `-p` : `default` creates fourteen
+VMs, and fourteen times sixteen gigabytes is not a number your workstation has.
 
 ```sh
 MOLECULE_MEMORY=16 MOLECULE_VCPUS=12 molecule test -p gentoo

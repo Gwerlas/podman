@@ -65,6 +65,23 @@
           community.general.portage:
             sync: web
 
+        # Podman 6 needs container-libs, buildah and the netavark pair from the
+        # testing branch too. Left masked, Portage resolves to podman 5 without a
+        # word, or stops on a block between buildah and container-libs.
+        - name: Accept the testing branch for podman
+          when: inventory_hostname == "gentoo-testing"
+          ansible.builtin.copy:
+            dest: /etc/portage/package.accept_keywords/podman
+            content: |
+              app-containers/podman ~amd64
+              app-containers/buildah ~amd64
+              app-containers/container-libs ~amd64
+              app-containers/netavark ~amd64
+              app-containers/aardvark-dns ~amd64
+            owner: root
+            group: root
+            mode: "0644"
+
         # The cloudinit image ships the official binhost in binrepos.conf but
         # leaves getbinpkg off, so Portage ignores it and builds every
         # dependency from source. Enabling a binhost is host policy, which here

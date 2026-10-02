@@ -394,6 +394,19 @@ own. Set a key to `null` to leave it out, knowing that podman may not start
 without some of them, and that below version 6 it ignores the driver's options
 when no driver is named.
 
+Podman 6 applies a `graphroot` of that file to rootless users too, where
+earlier versions used it for root alone, so a `graphroot` written there moves
+every user's store into root's directory. The role therefore carries over a
+`graphroot` and a `runroot` only where the distribution's own file sets them,
+or podman needs them, for the version that is installed. On Gentoo, whose
+stable branch carries podman 5 and whose testing branch (`~amd64`) carries
+podman 6, it picks the file from the version Portage would install, as
+`emerge --pretend` resolves it — the version, not the branch, so a host that
+accepts podman 6 gets podman 6's file. Root and each user keep podman's
+default store for their mode unless you name a `graphroot` yourself, which
+podman 6 then applies to everyone. When Portage cannot resolve podman and none
+is installed, the role stops and says so, rather than guess a version.
+
 The role writes its configuration before it installs podman, so the rootful
 store is created under it. An Ubuntu 24.04 host provisioned before that has a
 store that recorded no driver, and refuses the one this file names —

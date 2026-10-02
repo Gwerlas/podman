@@ -8,9 +8,9 @@ dependency:
     force: true
 driver:
   name: default
-# Every platform of molecule/shared/platforms.yml. The `service` scenario links
-# to this file rather than repeating the list : both boot the whole matrix, and
-# only their converge differs.
+# Every platform of molecule/shared/platforms.yml. The `service` and `wrapper`
+# scenarios link to this file rather than repeating the list : they boot the
+# whole matrix, and only their converge differs.
 platforms:
   - name: archlinux
     groups:
@@ -69,6 +69,13 @@ platforms:
   # OpenRC profile, and the role drives USE flags anyway, so no binary package
   # matches. Give it cores to keep the emerge short.
   - name: gentoo
+    groups:
+      - gentoo
+    memory: 4
+    vcpus: 4
+  # The same image on Gentoo's testing branch, because podman 6 is only there :
+  # the stable branch, `gentoo` above, still carries podman 5.
+  - name: gentoo-testing
     groups:
       - gentoo
     memory: 4

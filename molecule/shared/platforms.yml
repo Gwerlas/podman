@@ -69,3 +69,10 @@ platforms:
     # Rolling: autobuilds are pruned after a few weeks, so don't pin a timestamp
     # (it 404s). create.yml resolves the current image from this pointer file.
     image_latest: https://distfiles.gentoo.org/releases/amd64/autobuilds/latest-di-amd64-cloudinit.txt
+
+  # The same image, with the testing branch (~amd64) accepted for podman by
+  # prepare.yml : Gentoo's stable carries podman 5, and podman 6 is only there.
+  # Not a platform of its own for Galaxy, hence no `galaxy:` key.
+  - name: gentoo-testing
+    firmware: efi
+    image_latest: https://distfiles.gentoo.org/releases/amd64/autobuilds/latest-di-amd64-cloudinit.txt
