@@ -479,6 +479,10 @@ available on the target Linux distribution :
 
 So the scripts calling `docker` will transparently use `podman` instead, or almost.
 
+As with Docker, an image name with no registry is looked up on `docker.io` :
+the role makes it the search registry in `/etc/containers/registries.conf`, on
+every distribution.
+
 `docker compose` follows, as long as `podman_compose_install` is set to `true`
 and the installed Podman is `4.7` or upper, which routes it to `podman-compose`
 by itself.

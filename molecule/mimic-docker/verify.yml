@@ -22,6 +22,15 @@
       containers.podman.podman_system_info:
       register: podman_info
 
+    # The drop-ins are gone (see pre_tasks), so the search list is the role's
+    # file alone : docker.io comes from podman_mimic_docker, on Gentoo as
+    # anywhere.
+    - name: Check docker.io is a search registry
+      ansible.builtin.assert:
+        that:
+          - "'docker.io' in podman_info.podman_system_info.registries.search"
+        fail_msg: "registries : {{ podman_info.podman_system_info.registries }}"
+
     # `docker compose` is delegated to podman-compose by podman itself, but only
     # since Podman 4.7. Older distributions just have no compose at all.
     - name: Compose through the docker command
