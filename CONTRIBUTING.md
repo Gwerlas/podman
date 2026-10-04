@@ -1,7 +1,25 @@
 Development guide
 =================
 
-This role should not need any external settings to work.
+This guide keeps what is specific to the role: how to run its scenarios, its
+layout, the rules that are its own. The rest is in the
+[engineering handbook][handbook], which binds every contribution here. As an
+Ansible role, it is also bound by the family's reference guide, the
+[`gwerlas.system` collection's CONTRIBUTING.md][collection-guide], and by the
+[principles][collection-principles] that guide enforces. The pages this role's
+work touches most:
+
+- [Collection guide][collection-guide]: tags, modules before tasks, a file the
+  distribution ships, variables, changelog;
+- [Principles][collection-principles]: what users can rely on;
+- [Code][handbook-code]: choices, tests, YAML;
+- [Git][handbook-git]: commits, issue references;
+- [Documentation][handbook-documentation]: who reads what, where a rationale
+  lives, Markdown;
+- [CI][handbook-ci];
+- [Supported platforms][handbook-platforms];
+- [Releases][handbook-releases];
+- [Issues and merge requests][handbook-mr].
 
 Requirements
 ------------
@@ -52,12 +70,9 @@ image and nothing else : it has no `galaxy:` key, as Galaxy lists a distribution
 once. `default`'s `molecule.yml` lists it next to `gentoo`, which keeps covering
 the stable branch, and the scenarios linked to it boot both.
 
-Supported does not mean current : a platform stays in the list as long as we
-can still test it, whatever its upstream end of life. What we cannot do is
-guarantee one whose packages are no longer reachable, and that is where an
-entry leaves both files at once. A release past its end of life usually keeps
-its packages on an archive mirror rather than losing them, and reaching them
-there is the baseline's job, not the role's.
+When a platform enters and leaves the list is the handbook's
+[Supported platforms][handbook-platforms] page. An entry leaves
+`platforms.yml` and `meta/main.yml` at once, the sync script doing the second.
 
 `molecule/shared/` also hosts the `create.yml`, `destroy.yml` and `prepare.yml`
 playbooks that every scenario points at through `provisioner.playbooks`.
@@ -74,24 +89,23 @@ baseline is a gap in the role, not something prepare should paper over.
 
 ### Distribution defaults
 
-An empty inventory installs Podman, sets up rootless mode for the user running
-the play, and changes nothing else : the distribution's configuration is the
-reference, and the role corrects it only where its packages do not work out of
-the box. A value the role would merely prefer, or upstream's default where the
-distribution chose otherwise, has no place in `vars/`. `README.md` lists what
-the role changes on its own ; keep that list in step.
+What [an empty inventory changes][principle-empty] is, for this role, Podman
+installed and rootless mode set up for the user running the play. Beyond that
+the role corrects the distribution's configuration only where its packages do
+not work out of the box. A value the role would merely prefer, or upstream's
+default where the distribution chose otherwise, has no place in `vars/`.
+`README.md` lists what the role changes on its own ; keep that list in step.
 
 Those corrections go in the files of the `vars` directory. Each configuration
 file the role renders reads two dictionaries, named after the file : the
 distribution's `_podman_<file>_defaults`, set in `vars/`, and the user's
 `podman_<file>_config`, merged over it. `storage.conf` reads a third one
-beneath them, `_podman_storage_base`, also set in `vars/` : the file replaces
-the distribution's instead of adding to it, so it has to carry what that file
-sets. Copy its keys as the distribution ships them — leaving out empty lists and
-tables — and add nothing it does not set. Where the distribution ships no file
-and podman cannot run on one lacking some keys, the base holds podman's own
-values for them, as `vars/debian-like.yml` does. The leading underscore marks
-what the role sets for itself, as it does for every other variable of `vars/`.
+beneath them, `_podman_storage_base`, also set in `vars/` : the base of the
+third case of [a file the distribution ships][collection-file]. Copy its keys as
+the distribution ships them — leaving out empty lists and tables — and add
+nothing it does not set. Where the distribution ships no file and podman cannot
+run on one lacking some keys, the base holds podman's own values for them, as
+`vars/debian-like.yml` does.
 
 | File                              | Distribution                  | User                       |
 | --------------------------------- | ----------------------------- | -------------------------- |
@@ -264,19 +278,19 @@ molecule verify
 Editing tasks
 -------------
 
-`yamllint` and `ansible-lint` leave three habits to the author.
+`yamllint` and `ansible-lint` leave habits to the author. Most are the
+handbook's, in [Code][handbook-code], and the collection guide's, in
+[the module, not our own version of it][collection-module]: use the tool that
+exists, state choices rather than defaults, quote YAML only where the parser
+needs it. Two are this role's.
 
-**`command` only where no module does the job.** Look for a module first, and
-not only for the obvious verbs : `ansible.builtin.stat` reads a path's SELinux
-context with `get_selinux_context`, `containers.podman.podman_system_info`
-answers where the container store lives. A module reports its own changes, so
-it needs no `changed_when` for a read ; it takes its arguments as data, so
-nothing is split on whitespace ; and it says what it did rather than what it
-ran. `restorecon` is a fair use of `command` — nothing wraps it — and then the
-arguments go in `argv`, never in `cmd`, which is a line to be split and will
-tear a Jinja expression into pieces the day one holds a space.
-
-The two that follow are about how a value is written rather than what it means.
+**Where `command` is the tool that exists.** The module is not always the
+obvious one: `ansible.builtin.stat` reads a path's SELinux context with
+`get_selinux_context`, `containers.podman.podman_system_info` answers where the
+container store lives. `restorecon` is a fair use of
+`command` — nothing wraps it — and then the arguments go in `argv`, never in
+`cmd`, which is a line to be split and will tear a Jinja expression into pieces
+the day one holds a space.
 
 **A scalar wherever the module coerces one.** A parameter declared
 `type: list, elements: str` accepts a bare string and wraps it itself, so a
@@ -288,14 +302,6 @@ community.general.portage:
 ```
 
 The list-of-one form reads as a multi-package call nobody trimmed.
-
-**Quotes only where YAML needs them.** `app-containers/podman`, `~amd64`,
-`podman` and file paths are plain scalars and stay bare. Quote when the parser
-would otherwise take the value for something else: a string shaped like a
-boolean or a number (`"yes"`, `"123"`), a value opening on `%`, `*`, `&`, `?`
-or `:`, one holding a `#` or a colon followed by a space, and a Jinja
-expression that starts the value — `"{{ var }}"`, which YAML reads as a flow
-mapping without them.
 
 Editing templates
 -----------------
@@ -311,21 +317,20 @@ j2lint templates/ --ignore jinja-statements-indentation jinja-statements-delimit
 
 Both ignored rules are explained in `.gitlab-ci.yml`, next to the job.
 
-Linting only proves a template *compiles*. Whether it renders the right thing
-is covered by the scenario that uses it — `mimic-docker` for `portage.use.j2`,
-`default` for the `containers.conf` / `registries.conf` / `storage.conf`
-family — and those need a workstation. So review a template change by looking
-at what it produces, not by trusting the pipeline.
+Whether a template renders the right thing is covered by the scenario that
+uses it — `mimic-docker` for `portage.use.j2`, `default` for the
+`containers.conf` / `registries.conf` / `storage.conf` family — and those need
+a workstation. The pipeline does not run them, so a template change is
+reviewed by what it renders, as [Code][handbook-code-test] says.
 
 Editing documentation
 ---------------------
 
 ### Markdown conventions
 
-`markdownlint` checks every `*.md`. The conventions this role follows — setext
-headings for levels 1 and 2, dashes for bullets, 80 columns for prose with
-tables and code blocks exempt — are recorded, with their rationale, in
-`.markdownlint.yaml`. To run it locally :
+`markdownlint` checks every `*.md` against the conventions of the handbook's
+[Markdown][handbook-markdown] section, recorded, with their rationale, in
+`.markdownlint.yaml`. To run it locally:
 
 ```sh
 markdownlint-cli2 "**/*.md" "!.ansible"
@@ -344,88 +349,60 @@ out when a link makes a sentence overflow — move the URL to a `[name]:`
 definition at the end of the file rather than splitting the link across two
 lines.
 
-Pad table cells so the borders line up, and size each separator row to its
-column.
-
 ### Where a rationale lives
 
-Every artifact starts empty : a sentence earns its place when its absence would
+Every artifact starts empty: a sentence earns its place when its absence would
 cost the reader something precise, not when a home can be found for it. A
-reason then lives in exactly one of these, the others pointing at it :
+reason then lives in exactly one home, the others pointing at it. The handbook's
+[Where a rationale lives][handbook-rationale] says how to choose and gives the
+three tests by deletion. This role's homes:
 
-| Home                     | What it holds                                       |
-| ------------------------ | --------------------------------------------------- |
-| Code comment             | what this line does, and under which rule           |
-| `CONTRIBUTING` / `README`| what the reader has to be able to predict or do     |
-| Commit message           | what changes, and why it is right                   |
-| Issue / merge request    | how we know: what was run, measured, tried, dropped |
-| Upstream documentation   | the rule itself, whenever the rule is not ours      |
-
-Write in that order, narrowest first. A merge request is written **against**
-its commits, not from the same head of context : after one opening sentence
-naming what it does, it holds only what the diff and the commit messages do not
-already say. A one-line pointer beats a restatement every time.
-
-Two boundaries, two tests, both by deletion.
-
-**A comment summarises, it does not narrate.** Remove everything written in the
-past tense — when it was observed, what was measured, which false trail was
-followed. What is left is the rule.
-
-**A commit is knowable without running anything.** Remove from the merge
-request every sentence that would already be true had the work never run : it
-belongs to the commit. Remove from the commit every sentence that only became
-true by running something : it belongs to the merge request.
-
-**Cite upstream, never re-derive it.** When the reason is a third-party tool's
-behaviour — Portage, apt, systemd, Podman, Jinja — quote one sentence, give the
-URL, stop. A reconstruction of your own goes stale the day upstream changes its
-mind, and reads as this role's opinion when it is an external constraint.
+| Home                      | What it holds                                       |
+| ------------------------- | --------------------------------------------------- |
+| Code comment              | what this line does, and under which rule           |
+| `CONTRIBUTING` / `README` | what the reader has to be able to predict or do     |
+| Commit message            | what changes, and why it is right                   |
+| Issue / merge request     | how we know: what was run, measured, tried, dropped |
+| Upstream documentation    | the rule itself, whenever the rule is not ours      |
 
 Submit your changes
 -------------------
 
 Merge request in Gitlab.
 
-Everything that lands in the repository or in GitLab is written in English —
-code, comments, commit messages, `README.md`, this file, and the title and body
-of every issue and merge request. A conversation held in another language stops
-at the artifact.
+Everything is written in English, as the [handbook][handbook] asks, and commits
+follow [Git][handbook-git]: atomic, with their tests and documentation in the
+same commit, and the issue referenced from the body only.
 
-A change comes with its tests and its documentation, in the same commit. A new
-variable, or a change in behaviour, is not finished until :
-
-- a molecule scenario exercises it — an existing one where it fits,
-  `mimic-docker` for anything about the `docker` command, `service` for the
-  rootless units, `wrapper` for the scripts in `podman_wrappers_path`,
-  `default` for the role's own defaults;
-- the user-facing half is written in `README.md` : what the variable does, its
-  default, an example;
-- the reasoning a future maintainer will need — an upstream constraint, a
-  Portage quirk, why two tasks must run in that order — goes in a code comment
-  or in this file, not in the user documentation.
-
-Keeping the three together is what makes a commit reviewable on its own : a
-change that arrives without its test looks finished when it is not, and one
-that arrives without its reason forces the next reader to guess.
-
-The issue is referenced from the commit body, and only from there. `Closes #3`
-if the commit settles the whole ticket; `Relates to #3` if it settles one of
-the three things the ticket asks for, so the other two stay visible. Never the
-bare number on a line of its own : git strips a line opening on `#` as a
-comment whenever the message goes through an editor, and the reference vanishes
-without a word. `README.md` never carries an issue number — a user can do
-nothing with it, and it goes stale the day the issue closes.
+A change extends the molecule scenario that fits: an existing one where it
+does, `mimic-docker` for anything about the `docker` command, `service` for the
+rootless units, `wrapper` for the scripts in `podman_wrappers_path`, `default`
+for the role's own defaults.
 
 Tagging a release
 -----------------
 
-A tag publishes. The `import` job pushes the role to Ansible Galaxy and runs
-on a protected tag and nowhere else.
+What a tag publishes, and how to number and log a release, is the handbook's
+[Releases][handbook-releases] page. Here the `import` job pushes the role to
+Ansible Galaxy.
 
-What users install is not the repository. Galaxy only records the tag and
-serves GitHub's archive of it, which `git archive` builds, so every path marked
-`export-ignore` in [`.gitattributes`](.gitattributes) stays out of it:
-Molecule, CI, the tagged-run playbook, linter and editor settings, this guide.
-A new file that only serves development belongs in that list; check what a tag
-would ship with `git archive HEAD | tar t`.
+[`.gitattributes`](.gitattributes) lists what stays out of the archive users
+install: Molecule, CI, the tagged-run playbook, linter and editor settings, this
+guide. A new file that only serves development belongs in that list.
+
+[handbook]: https://gitlab.com/yoanncolin/handbook/-/blob/main/README.md
+[handbook-code]: https://gitlab.com/yoanncolin/handbook/-/blob/main/code.md
+[handbook-code-test]: https://gitlab.com/yoanncolin/handbook/-/blob/main/code.md#test-what-the-user-gets
+[handbook-git]: https://gitlab.com/yoanncolin/handbook/-/blob/main/git.md
+[handbook-documentation]: https://gitlab.com/yoanncolin/handbook/-/blob/main/documentation.md
+[handbook-markdown]: https://gitlab.com/yoanncolin/handbook/-/blob/main/documentation.md#markdown
+[handbook-rationale]: https://gitlab.com/yoanncolin/handbook/-/blob/main/documentation.md#where-a-rationale-lives
+[handbook-ci]: https://gitlab.com/yoanncolin/handbook/-/blob/main/ci.md
+[handbook-platforms]: https://gitlab.com/yoanncolin/handbook/-/blob/main/platforms.md
+[handbook-releases]: https://gitlab.com/yoanncolin/handbook/-/blob/main/releases.md
+[handbook-mr]: https://gitlab.com/yoanncolin/handbook/-/blob/main/issues-and-merge-requests.md
+[collection-guide]: https://gitlab.com/yoanncolin/ansible/collections/system/-/blob/main/CONTRIBUTING.md
+[collection-file]: https://gitlab.com/yoanncolin/ansible/collections/system/-/blob/main/CONTRIBUTING.md#a-file-the-distribution-ships
+[collection-module]: https://gitlab.com/yoanncolin/ansible/collections/system/-/blob/main/CONTRIBUTING.md#the-module-not-our-own-version-of-it
+[collection-principles]: https://gitlab.com/yoanncolin/ansible/collections/system/-/blob/main/docs/principles.md
+[principle-empty]: https://gitlab.com/yoanncolin/ansible/collections/system/-/blob/main/docs/principles.md#3-an-empty-inventory-changes-almost-nothing
