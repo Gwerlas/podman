@@ -6,7 +6,7 @@
     - name: Hello world
       containers.podman.podman_container:
         name: test
-        image: hello-world
+        image: docker.io/library/hello-world
         detach: false
 
     # A published port has netavark write firewall rules, through the driver
@@ -15,7 +15,7 @@
       become: true
       containers.podman.podman_container:
         name: test-rootful
-        image: hello-world
+        image: docker.io/library/hello-world
         detach: false
         publish:
           - 8080:80

@@ -11,10 +11,6 @@ packages:
   selinux:
     - sys-apps/policycoreutils
 
-_podman_registries_defaults:
-  unqualified-search-registries:
-    - docker.io
-
 _podman_containers_defaults:
   network:
     firewall_driver: nftables
