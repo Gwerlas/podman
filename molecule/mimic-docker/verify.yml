@@ -14,9 +14,7 @@
         cmd: docker run hello-world
       changed_when: false
       register: docker_run
-      failed_when:
-        - docker_run.rc > 0
-        - not "'Hello from Docker!' in docker_run.stdout"
+      failed_when: docker_run.rc > 0 or 'Hello from Docker!' not in docker_run.stdout
 
     - name: Ask podman its version
       containers.podman.podman_system_info:
