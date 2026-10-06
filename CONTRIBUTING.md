@@ -411,10 +411,14 @@ Ansible Galaxy.
 
 The release merge request runs `antsibull-changelog release --version X.Y.Z
 --date YYYY-MM-DD`, since `changelogs/config.yaml` sets the project in "other
-project" mode, which has no `galaxy.yml` to take them from.
+project" mode, which has no `galaxy.yml` to take them from. The
+`changelog-release` job, which `import` waits for, fails a tag that leaves a
+fragment behind or that `changelogs/changelog.yaml` does not hold a release
+for; `jobs/changelog-release` runs the same check locally, with
+`CI_COMMIT_TAG` set.
 
 [`.gitattributes`](.gitattributes) lists what stays out of the archive users
-install: Molecule, CI, the changelog sources, the tagged-run
+install: Molecule, CI, the job scripts, the changelog sources, the tagged-run
 playbook, linter and editor settings, this guide. A new file that only serves
 development belongs in that list.
 

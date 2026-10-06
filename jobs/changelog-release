@@ -1,0 +1,23 @@
+#!/bin/sh
+# Fail when the tag in CI_COMMIT_TAG would publish a release that
+# changelogs/changelog.yaml does not hold.
+set -eu
+
+cd "$(dirname "$0")/.."
+
+tag=${CI_COMMIT_TAG:?CI_COMMIT_TAG is not set}
+status=0
+
+pending=$(find changelogs/fragments -type f \( -name '*.yml' -o -name '*.yaml' \))
+if [ -n "$pending" ]; then
+  echo "Fragments still wait for antsibull-changelog release:" >&2
+  echo "$pending" >&2
+  status=1
+fi
+
+if ! grep -Fxq "  $tag:" changelogs/changelog.yaml; then
+  echo "changelogs/changelog.yaml holds no release for $tag" >&2
+  status=1
+fi
+
+exit "$status"

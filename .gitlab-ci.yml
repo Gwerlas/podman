@@ -34,6 +34,7 @@ workflow:
           - defaults/**/*
           - filter_plugins/**/*
           - handlers/**/*
+          - jobs/**/*
           - meta/**/*
           - molecule/**/*
           - requirements.yml
@@ -139,6 +140,29 @@ changelog:
     - antsibull-changelog generate
     - git diff --exit-code CHANGELOG.md
 
+# `jobs/` holds job scripts only, and each one is linted.
+shellcheck:
+  image: python:3.13-slim
+  rules:
+    - *on-default-branch
+    - changes:
+        compare_to: refs/heads/main
+        paths:
+          - .gitlab-ci.yml
+          - jobs/**/*
+  before_script:
+    - pip install --quiet shellcheck-py==0.11.0.1
+  script:
+    - shellcheck jobs/*
+
+# A tag publishes what the changelog holds : the import below waits for this
+# job, so a release nobody wrote down never reaches Galaxy.
+changelog-release:
+  image: python:3.13-slim
+  rules:
+    - if: $CI_COMMIT_TAG
+  script: jobs/changelog-release
+
 # Molecule converges the whole role, never one tag of it, so a tag that stops
 # working on its own ships through a green pipeline. Two of them run alone here,
 # in a container, since they only touch what a container has : `users` and
@@ -180,6 +204,8 @@ import:
   image: gwerlas/ansible
   # Publishing must not be cancelled halfway through.
   interruptible: false
+  needs:
+    - changelog-release
   script: ansible-galaxy role import --token $GALAXY_TOKEN Gwerlas podman
   rules:
     - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG'
