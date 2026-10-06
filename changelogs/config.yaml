@@ -1,0 +1,8 @@
+changes_file: changelog.yaml
+changes_format: combined
+is_other_project: true
+title: gwerlas.podman
+output:
+  - file: CHANGELOG.md
+    format: md
+changelog_nice_yaml: true

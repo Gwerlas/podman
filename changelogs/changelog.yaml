@@ -1,0 +1,172 @@
+---
+ancestor: null
+releases:
+  0.1.0:
+    changes:
+      minor_changes:
+        - Install Podman, with the Compose and Toolbox packages on request (``podman_compose_install``,
+          ``podman_toolbox_install``).
+        - Make Podman a drop-in replacement for Docker with ``podman_mimic_docker``.
+        - Set up Podman in rootless mode for the users of ``podman_users``.
+        - Write ``/etc/containers/containers.conf``, ``registries.conf``, ``storage.conf``
+          and ``libpod.conf`` from the ``podman_containers_config``, ``podman_registries_config``,
+          ``podman_storage_config`` and ``podman_libpod_config`` dictionaries, and
+          leave the distribution's files alone when none is set.
+      release_summary: Initial version.
+    release_date: '2023-02-12'
+  0.2.0:
+    changes:
+      breaking_changes:
+        - Require Ansible 2.10 or later.
+      minor_changes:
+        - Support Gentoo.
+      release_summary: Add Gentoo support.
+    release_date: '2023-04-08'
+  0.3.0:
+    changes:
+      minor_changes:
+        - Install wrappers that run a command in a container through Podman (``podman_wrappers``,
+          ``podman_wrappers_path``, ``podman_wrappers_values``).
+      release_summary: Add wrappers.
+    release_date: '2023-07-24'
+  0.3.1:
+    changes:
+      bugfixes:
+        - Load the ``ip_tables`` kernel module persistently and, on Gentoo, build
+          iptables with its ``nftables`` USE flag.
+      release_summary: Fix module kernel loading.
+    release_date: '2023-10-21'
+  0.3.2:
+    changes:
+      bugfixes:
+        - Retry the installation of the packages on network failures (``podman_retries``).
+      release_summary: Retry packages installation on network failures.
+    release_date: '2023-10-25'
+  0.3.3:
+    changes:
+      bugfixes:
+        - Migrate Podman's system right after a change of the subordinate user or
+          group IDs, so that the change takes effect during the run.
+      release_summary: Flush handlers on subuid modification.
+    release_date: '2023-10-26'
+  0.4.0:
+    changes:
+      breaking_changes:
+        - '``podman_users`` is now a list of objects with a ``name`` and optional
+          ``home``, ``uid``, ``subuid_starts``, ``subuid_length``, ``subgid_starts``
+          and ``subgid_length`` keys, instead of a list of login names.'
+      bugfixes:
+        - Fix the management of the users of ``podman_users``, their home directory
+          and their subordinate user and group ID ranges.
+      minor_changes:
+        - Create the users of ``podman_users`` that do not exist yet through the ``gwerlas.system``
+          role, unless ``podman_create_missing_users`` is ``false``.
+        - Run the rootless tasks alone with ``tasks_from rootless``.
+      release_summary: Fix system users management.
+    release_date: '2024-01-22'
+  0.4.1:
+    changes:
+      bugfixes:
+        - Fix the permissions of the home directory of system users.
+      release_summary: Fix system users' home dir permissions.
+    release_date: '2024-01-31'
+  0.5.0:
+    changes:
+      breaking_changes:
+        - The ``podman_current_version`` fact is now ``podman_version``.
+      minor_changes:
+        - Provide the ``podman_version`` and ``podman_packages`` facts without changing
+          the node, with ``tasks_from facts``.
+        - Provision networks (``podman_networks``) and containers (``podman_containers``),
+          the latter as systemd services.
+        - Run the provisioning alone with the ``provision`` tag.
+      release_summary: Add resources provisioning.
+    release_date: '2024-03-11'
+  0.5.1:
+    changes:
+      bugfixes:
+        - Run the Podman and Docker version probes in check mode too, so that ``--check``
+          no longer fails on them.
+      release_summary: Fix the check mode.
+    release_date: '2024-12-06'
+  0.5.2:
+    changes:
+      bugfixes:
+        - Retry the download of the images on network failures.
+      minor_changes:
+        - Run the package installation and the user management alone with the ``packages``
+          and ``users`` tags.
+      release_summary: Retry images downloads on network failures.
+    release_date: '2025-01-13'
+  0.6.0:
+    changes:
+      minor_changes:
+        - Log in to a registry when pulling the image of a container, with the ``username``
+          and ``password`` keys of a ``podman_containers`` entry.
+      release_summary: Enable podman login on image pull.
+    release_date: '2025-02-11'
+  0.7.0:
+    changes:
+      minor_changes:
+        - Declare Enterprise Linux 10 and Gentoo among the supported platforms.
+        - Provision images on their own with ``podman_images``.
+      release_summary: Rewrite image provisioning.
+    release_date: '2025-06-11'
+  0.7.1:
+    changes:
+      bugfixes:
+        - Set ``DBUS_SESSION_BUS_ADDRESS`` when managing the systemd service of a
+          rootless container.
+      release_summary: Set DBUS environment variable on service management.
+    release_date: '2025-10-13'
+  0.8.0:
+    changes:
+      breaking_changes:
+        - Mount the Podman socket on ``/run/podman/podman.sock``, instead of ``/run/docker.sock``,
+          in the containers of the wrappers that need it.
+        - Stop loading the ``ip_tables`` and ``tun`` kernel modules, stop writing
+          the Portage USE flags of iptables, and stop refusing to mimic Docker when
+          Docker is installed.
+      minor_changes:
+        - On Gentoo, install ``podman-compose`` and use ``nftables`` as the default
+          firewall driver.
+        - Write a static header, ``Ansible managed - do not edit``, in the generated
+          files, so that they no longer change from one run to the next.
+      release_summary: Slim down the role and modernize facts access.
+    release_date: '2026-05-21'
+  0.9.0:
+    changes:
+      breaking_changes:
+        - Stop converging ``gwerlas.system`` as a dependency of the role. (`#2 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/2>`__)
+          The role still has to be installed, since it provides the user management,
+          but a host that relied on this role to apply the whole system configuration
+          has to converge ``gwerlas.system`` itself.
+      bugfixes:
+        - Install ``acl`` when ``podman_users`` names a user, so that provisioning
+          for a user other than the connecting one no longer fails. (`#6 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/6>`__)
+        - Label the container store of a rootless user, wherever its graphroot is,
+          so that containers can reach their entrypoint on SELinux hosts. (`#11 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/11>`__)
+        - Load the facts whatever tag a run is limited to, so that ``--tags wrappers``
+          no longer fails. (`#22 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/22>`__)
+        - Name EPEL, instead of failing on a missing package, when ``podman-compose``
+          is not available on Enterprise Linux. (`#5 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/5>`__)
+        - Pick the pull policy of the wrappers from the version of Podman, so that
+          they run on the Podman 3.0 of Debian 11. (`#19 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/19>`__)
+        - Read the ``env_patterns`` of a wrapper as regular expressions, as ``grep``
+          does.
+        - Reload the unit files only when a unit was written, so that a run that changes
+          nothing reports no change. (`#7 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/7>`__)
+        - Render ``storage.conf`` instead of failing on an undefined variable, and
+          no longer write an empty ``[storage]`` table. (`#12 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/12>`__)
+        - Set ``podman_version`` on the run that installs Podman. (`#21 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/21>`__)
+        - Skip an option of a wrapper whose value is null, instead of emitting a bare
+          flag that swallowed the next option.
+      minor_changes:
+        - Configure the Portage USE flags of Podman on Gentoo. (`#8 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/8>`__)
+        - Create the source of a bind mount that does not exist yet when a wrapper
+          runs, and give the wrapper script a shebang.
+        - Refuse to mimic Docker when Docker is installed. (`#8 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/8>`__)
+        - Require ``gwerlas.system`` 0.21.1. (`#1 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/1>`__)
+        - Support Debian 13 (trixie).
+      release_summary: Stop converging gwerlas.system, and make wrappers run everywhere.
+    release_date: '2026-09-14'

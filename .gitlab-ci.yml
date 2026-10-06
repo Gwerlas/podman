@@ -26,9 +26,11 @@ workflow:
         paths:
           - .config/**/*
           - .gitlab-ci.yml
+          - .markdownlint-cli2.yaml
           - .markdownlint.yaml
           - "**/*.md"
           - action_plugins/**/*
+          - changelogs/**/*
           - defaults/**/*
           - filter_plugins/**/*
           - handlers/**/*
@@ -111,9 +113,31 @@ markdownlint:
         paths:
           - "**/*.md"
           - .gitlab-ci.yml
+          - .markdownlint-cli2.yaml
           - .markdownlint.yaml
   script:
     - markdownlint-cli2 "**/*.md"
+
+# Checks the fragments, which are what a contributor writes, then that
+# CHANGELOG.md is what they generate. The pin sits in the job like j2lint's,
+# since no image carries the tool; the image is the one that ships git, which
+# `git diff` needs.
+changelog:
+  image: python:3.13
+  rules:
+    - *on-default-branch
+    - changes:
+        compare_to: refs/heads/main
+        paths:
+          - .gitlab-ci.yml
+          - CHANGELOG.md
+          - changelogs/**/*
+  before_script:
+    - pip install --quiet antsibull-changelog==0.35.1
+  script:
+    - antsibull-changelog lint
+    - antsibull-changelog generate
+    - git diff --exit-code CHANGELOG.md
 
 # Molecule converges the whole role, never one tag of it, so a tag that stops
 # working on its own ships through a green pipeline. Two of them run alone here,

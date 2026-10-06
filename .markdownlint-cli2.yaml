@@ -1,0 +1,5 @@
+# antsibull-changelog generates CHANGELOG.md, with HTML anchors, `*` bullets and
+# long lines that no rule of .markdownlint.yaml allows. The fragments it is
+# built from are what gets checked, by the `changelog` job.
+ignores:
+  - CHANGELOG.md

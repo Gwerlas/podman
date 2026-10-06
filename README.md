@@ -7,6 +7,8 @@ Install and configure podman in rootless mode.
 
 GitLab project : [yoanncolin/ansible/roles/podman](https://gitlab.com/yoanncolin/ansible/roles/podman)
 
+What each release changed : [CHANGELOG.md](CHANGELOG.md)
+
 What it changes
 ---------------
 

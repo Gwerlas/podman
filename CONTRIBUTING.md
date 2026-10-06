@@ -338,7 +338,9 @@ markdownlint-cli2 "**/*.md" "!.ansible"
 
 The `!.ansible` is for local runs only : `ansible-galaxy install` drops
 `gwerlas.system` there, and its documentation is not ours to lint. A CI job
-starts from a fresh clone and has no such directory.
+starts from a fresh clone and has no such directory. `CHANGELOG.md` is left out
+by `.markdownlint-cli2.yaml`: it is generated, and its HTML anchors and `*`
+bullets break rules the role follows.
 
 It fixes much of what it finds on its own with `--fix` — bullets, indentation,
 blank lines, bare URLs. What it cannot fix is line length, which is on you.
@@ -379,6 +381,27 @@ does, `mimic-docker` for anything about the `docker` command, `service` for the
 rootless units, `wrapper` for the scripts in `podman_wrappers_path`, `default`
 for the role's own defaults.
 
+Changelog
+---------
+
+A change a user can notice comes with a fragment in `changelogs/fragments/`,
+as the handbook's [Releases][handbook-releases] page says. A fragment is a YAML
+file whose keys are the sections of
+[antsibull-changelog](https://ansible.readthedocs.io/projects/antsibull-changelog/),
+each holding a list of sentences:
+
+```yaml
+bugfixes:
+  - Render the mirrors of a registry. (`#NN <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/NN>`__)
+```
+
+An entry that settles an issue ends with that link, written as above and
+rendered `[#NN](…)` in `CHANGELOG.md`; the handbook's
+[Changelog][handbook-changelog] says why. `CHANGELOG.md` is
+generated from the fragments and never edited: the `changelog` job runs
+`antsibull-changelog lint`, then `antsibull-changelog generate`, and fails when
+`CHANGELOG.md` is not what that gives.
+
 Tagging a release
 -----------------
 
@@ -386,9 +409,14 @@ What a tag publishes, and how to number and log a release, is the handbook's
 [Releases][handbook-releases] page. Here the `import` job pushes the role to
 Ansible Galaxy.
 
+The release merge request runs `antsibull-changelog release --version X.Y.Z
+--date YYYY-MM-DD`, since `changelogs/config.yaml` sets the project in "other
+project" mode, which has no `galaxy.yml` to take them from.
+
 [`.gitattributes`](.gitattributes) lists what stays out of the archive users
-install: Molecule, CI, the tagged-run playbook, linter and editor settings, this
-guide. A new file that only serves development belongs in that list.
+install: Molecule, CI, the changelog sources, the tagged-run
+playbook, linter and editor settings, this guide. A new file that only serves
+development belongs in that list.
 
 [handbook]: https://gitlab.com/yoanncolin/handbook/-/blob/main/README.md
 [handbook-code]: https://gitlab.com/yoanncolin/handbook/-/blob/main/code.md
@@ -400,6 +428,7 @@ guide. A new file that only serves development belongs in that list.
 [handbook-ci]: https://gitlab.com/yoanncolin/handbook/-/blob/main/ci.md
 [handbook-platforms]: https://gitlab.com/yoanncolin/handbook/-/blob/main/platforms.md
 [handbook-releases]: https://gitlab.com/yoanncolin/handbook/-/blob/main/releases.md
+[handbook-changelog]: https://gitlab.com/yoanncolin/handbook/-/blob/main/releases.md#changelog
 [handbook-mr]: https://gitlab.com/yoanncolin/handbook/-/blob/main/issues-and-merge-requests.md
 [collection-guide]: https://gitlab.com/yoanncolin/ansible/collections/system/-/blob/main/CONTRIBUTING.md
 [collection-file]: https://gitlab.com/yoanncolin/ansible/collections/system/-/blob/main/CONTRIBUTING.md#a-file-the-distribution-ships
