@@ -1,0 +1,2 @@
+breaking_changes:
+  - On Gentoo, stop writing a ``registries.conf`` that makes ``docker.io`` the search registry. Set it with ``podman_registries_config``, or let ``podman_mimic_docker`` add it. (`#29 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/29>`__)

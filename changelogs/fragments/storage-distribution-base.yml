@@ -1,0 +1,4 @@
+minor_changes:
+  - Carry over to ``storage.conf`` what the ``storage.conf`` of each distribution sets, instead of losing it as soon as a storage option is set.
+bugfixes:
+  - Start ``storage.conf`` from the paths Podman needs on the Debian family, so that rootful Podman starts with a user's storage options. (`#28 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/28>`__)

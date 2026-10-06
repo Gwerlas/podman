@@ -1,0 +1,2 @@
+bugfixes:
+  - On Gentoo, write the ``graphroot`` and ``runroot`` of ``storage.conf`` only for Podman 5, so that rootless users keep their own store with Podman 6. (`#35 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/35>`__)

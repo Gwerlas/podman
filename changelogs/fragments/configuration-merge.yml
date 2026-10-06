@@ -1,0 +1,2 @@
+bugfixes:
+  - Merge the ``containers.conf``, ``storage.conf`` and ``libpod.conf`` settings of a user into the distribution's, instead of replacing a whole table as soon as the user names it. A ``null`` removes a setting. (`#16 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/16>`__)

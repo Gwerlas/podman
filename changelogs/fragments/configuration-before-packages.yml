@@ -1,0 +1,2 @@
+bugfixes:
+  - Write the configuration of Podman before installing its packages, so that the store the Debian and Ubuntu packages create no longer refuses the driver ``storage.conf`` names. (`#31 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/31>`__)

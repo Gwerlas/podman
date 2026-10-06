@@ -1,0 +1,4 @@
+minor_changes:
+  - Pass the whole entry of ``podman_containers`` to ``containers.podman.podman_container``, so that every option of the installed collection works. (`#27 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/27>`__)
+  - Require ``containers.podman`` 1.17.0 or later. (`#25 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/25>`__)
+  - Stop requiring ``jmespath`` on the controller. (`#25 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/25>`__)

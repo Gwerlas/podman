@@ -1,0 +1,3 @@
+bugfixes:
+  - Run a container without ``run_as`` as the user the play runs as, with the systemd instance, the unit path, the privilege escalation and the check for a service manager that follow. (`#26 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/26>`__)
+  - Enable the unit of a container under the ``generate_systemd`` separator and ``container_prefix`` it was generated with. (`#25 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/25>`__)
