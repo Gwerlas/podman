@@ -188,6 +188,14 @@ systemd units and a reboot :
 molecule test -s service
 ```
 
+Test that a host whose containers run on the units `podman generate systemd`
+wrote, left by its prepare step, converges to Quadlet units, on the platforms
+whose Podman has Quadlet :
+
+```sh
+molecule test -s upgrade
+```
+
 Test the wrappers, and what their first call has to create :
 
 ```sh

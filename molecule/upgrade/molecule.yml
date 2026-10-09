@@ -1,0 +1,75 @@
+---
+dependency:
+  name: galaxy
+  # ansible-galaxy refuses to write over a role directory that already exists,
+  # and gives up rather than replacing it — so a version bump in
+  # requirements.yml stops the run until someone deletes the cached copy.
+  options:
+    force: true
+    requirements-file: ${MOLECULE_SCENARIO_DIRECTORY}/../default/requirements.yml
+driver:
+  name: default
+# The platforms of molecule/shared/platforms.yml whose Podman has Quadlet, 4.4
+# and later : the others keep the units podman generates, and have nothing to
+# upgrade from.
+platforms:
+  - name: archlinux
+    groups:
+      - archlinux
+    memory: 2
+  - name: trixie
+    groups:
+      - debian_like
+      - debian
+    memory: 2
+  - name: noble
+    groups:
+      - debian_like
+      - ubuntu
+    memory: 2
+  - name: centos9s
+    groups:
+      - redhat_like
+    memory: 2
+  - name: alma9
+    groups:
+      - redhat_like
+    memory: 2
+  - name: centos10s
+    groups:
+      - redhat_like
+    memory: 2
+  - name: alma10
+    groups:
+      - redhat_like
+    memory: 2
+  - name: fedora43
+    groups:
+      - redhat_like
+    memory: 2
+  - name: fedora44
+    groups:
+      - redhat_like
+    memory: 2
+  - name: gentoo
+    groups:
+      - gentoo
+    memory: 4
+    vcpus: 4
+  - name: gentoo-testing
+    groups:
+      - gentoo
+    memory: 4
+    vcpus: 4
+provisioner:
+  name: ansible
+  # prepare.yml and converge.yml read the same inventory.
+  inventory:
+    links:
+      group_vars: group_vars/
+  playbooks:
+    create: ../shared/create.yml
+    destroy: ../shared/destroy.yml
+    prepare: prepare.yml
+verifier:
+  name: ansible

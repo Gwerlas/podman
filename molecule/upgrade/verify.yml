@@ -1,0 +1,85 @@
+---
+- name: Verify the generated units gave way to Quadlet
+  hosts: all
+  vars:
+    # Each container, with the unit podman generated for it in prepare.yml.
+    upgraded:
+      - name: web
+        owner: nginx
+        generated: /data/web/.config/systemd/user/container-web.service
+      - name: custom
+        owner: nginx
+        generated: /data/web/.local/share/systemd/user/app_custom.service
+      - name: idle
+        owner: nginx
+        generated: /data/web/.config/systemd/user/container-idle.service
+      - name: rootful
+        owner: root
+        generated: /etc/systemd/system/container-rootful.service
+  tasks:
+    - name: Look for the generated unit files
+      become: true
+      ansible.builtin.stat:
+        path: "{{ item.generated }}"
+      loop: "{{ upgraded }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: generated_files
+
+    - name: Check the generated unit files are gone
+      ansible.builtin.assert:
+        that:
+          - generated_files.results | selectattr('stat.exists') | list == []
+        fail_msg: >-
+          left : {{ generated_files.results | selectattr('stat.exists') | map(attribute='item.generated') | list }}
+
+    - name: Read the generated units
+      become: true
+      become_user: "{{ item.owner }}"
+      vars:
+        uid: "{{ (item.owner == 'root') | ternary(0, 300) }}"
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
+      ansible.builtin.systemd:
+        name: "{{ item.generated | basename }}"
+        scope: "{{ (item.owner == 'root') | ternary('system', 'user') }}"
+      loop: "{{ upgraded }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: generated_units
+
+    - name: Check systemd no longer knows the generated units
+      vars:
+        known: "{{ generated_units.results | rejectattr('status.LoadState', 'eq', 'not-found') | list }}"
+      ansible.builtin.assert:
+        that:
+          - known == []
+        fail_msg: >-
+          {{ known | map(attribute='item.name') | zip(known | map(attribute='status.LoadState')) | list }}
+
+    - name: Read the containers
+      become: true
+      become_user: "{{ item.owner }}"
+      containers.podman.podman_container_info:
+        name: "{{ item.name }}"
+      loop: "{{ upgraded }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: containers
+
+    # Quadlet labels the container with the unit that runs it.
+    - name: Check each container runs once, from its Quadlet unit
+      vars:
+        found: "{{ item.containers | length }}"
+        running: "{{ item.containers[0].State.Running | default(false) }}"
+        unit: "{{ item.containers[0].Config.Labels.PODMAN_SYSTEMD_UNIT | default('') }}"
+      ansible.builtin.assert:
+        that:
+          - found | int == 1
+          - running | bool
+          - unit == item.item.name + '.service'
+        fail_msg: "{{ item.item.name }} : found={{ found }} running={{ running }} unit={{ unit }}"
+      loop: "{{ containers.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"

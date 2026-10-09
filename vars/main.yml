@@ -29,12 +29,14 @@ packages_computed: |
     flatten
   }}
 
-# The keys of a podman_containers entry that are the role's own, not
-# podman_container's, with their defaults. A container without run_as runs as
-# the user the play runs as.
+# The keys of a podman_containers entry that the role reads itself rather than
+# handing them to podman_container, with their defaults. A container without
+# run_as runs as the user the play runs as. `state` is the module's own word,
+# but the role decides which state each kind of unit hands it.
 _podman_containers_own_keys:
   run_as: "{{ ansible_facts.user_id }}"
   enabled: true
+  state: started
 
 # podman_containers, with the role's own keys always present : selectattr and
 # rejectattr raise on a container missing one, where a user names them only
@@ -45,4 +47,51 @@ _podman_containers: >-
     product(podman_containers) |
     map('combine') |
     list
+  }}
+
+# Podman 4.4 : "Introduce Quadlet, a new systemd-generator that easily writes
+# and maintains systemd services using Podman."
+# https://github.com/containers/podman/releases/tag/v4.4.0
+# Below it, or without systemd to run the generator, the units come from
+# `podman generate systemd`. podman_version is null until packages.yml has
+# installed podman.
+_podman_quadlet: >-
+  {{
+    ansible_facts.service_mgr == 'systemd' and
+    (podman_version | default('0', true)) is version('4.4', '>=')
+  }}
+
+# The units of the container in `_podman_container`, the loop variable of
+# tasks/provision/containers/. podman generate systemd names its unit
+# <prefix><separator><name>, `-` unless told otherwise ; Quadlet names it after
+# the file, <name>.container unless quadlet_filename says otherwise.
+_podman_generated_unit: >-
+  {{ _podman_container.generate_systemd.container_prefix | default('container') }}{{
+  _podman_container.generate_systemd.separator | default('-') }}{{ _podman_container.name }}
+_podman_generated_unit_dir: >-
+  {{
+    _podman_container.generate_systemd.path |
+    default(
+      (_podman_container.run_as == 'root') |
+      ternary(
+        '/etc/systemd/system/',
+        ansible_facts.getent_passwd[_podman_container.run_as].4 + '/.config/systemd/user/'
+      )
+    )
+  }}
+_podman_quadlet_unit: >-
+  {{ _podman_container.quadlet_filename | default(_podman_container.name) | regex_replace('\.container$', '') }}
+_podman_quadlet_file: >-
+  {{
+    [
+      _podman_container.quadlet_dir |
+      default(
+        (_podman_container.run_as == 'root') |
+        ternary(
+          '/etc/containers/systemd',
+          ansible_facts.getent_passwd[_podman_container.run_as].4 + '/.config/containers/systemd'
+        )
+      ),
+      _podman_quadlet_unit + '.container',
+    ] | path_join
   }}

@@ -1,0 +1,187 @@
+---
+# A host provisioned before Quadlet keeps the units podman generated, which
+# would run each container a second time, next to its Quadlet unit.
+- name: Find the units podman generated
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  ansible.builtin.stat:
+    path: "{{ [_podman_generated_unit_dir, _podman_generated_unit + '.service'] | path_join }}"
+  register: generated_units
+  loop: "{{ _podman_containers }}"
+  loop_control:
+    loop_var: _podman_container
+    label: "{{ _podman_container.name }}"
+
+- name: Stop the units podman generated
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  vars:
+    uid: "{{ ansible_facts.getent_passwd[_podman_container.run_as].1 }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
+  ansible.builtin.systemd:
+    name: "{{ _podman_generated_unit }}"
+    state: stopped
+    enabled: false
+    scope: "{{ (_podman_container.run_as == 'root') | ternary('system', 'user') }}"
+  loop: &generated_units_found >-
+    {{ generated_units.results | selectattr('stat.exists') | map(attribute='_podman_container') }}
+  loop_control:
+    loop_var: _podman_container
+    label: "{{ _podman_container.name }}"
+
+# The container outlives its unit : the unit only started it, and podman
+# started one declared `enabled: false` itself. Its name is the one Quadlet
+# gives the container it runs.
+- name: Remove the containers of the units podman generated
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  containers.podman.podman_container:
+    name: "{{ _podman_container.name }}"
+    state: absent
+  loop: *generated_units_found
+  loop_control:
+    loop_var: _podman_container
+    label: "{{ _podman_container.name }}"
+
+- name: Remove the units podman generated
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  ansible.builtin.file:
+    path: "{{ [_podman_generated_unit_dir, _podman_generated_unit + '.service'] | path_join }}"
+    state: absent
+  register: retired
+  loop: *generated_units_found
+  loop_control:
+    loop_var: _podman_container
+    label: "{{ _podman_container.name }}"
+
+- name: Containers
+  register: provisioned
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  vars:
+    # The entry without the role's own keys : the module refuses an option it
+    # does not know. generate_systemd has no say over a Quadlet unit.
+    entry: >-
+      {{
+        _podman_container | dict2items |
+        rejectattr('key', 'in', _podman_containers_own_keys) |
+        rejectattr('key', 'eq', 'generate_systemd') |
+        items2dict
+      }}
+    # Restart and [Install] take the place of generate_systemd's restart
+    # policy and of `systemctl enable`. They come after the user's own
+    # quadlet_options, so a plain key=value of theirs stays in [Container] ;
+    # each holds its own section header, in a YAML literal, as a `\n` inside a
+    # Jinja string stays a backslash.
+    restart: |
+      [Service]
+      Restart=on-failure
+    install: |
+      [Install]
+      WantedBy=default.target
+    options: >-
+      {{
+        entry |
+        combine({
+          'state': 'quadlet',
+          'quadlet_options':
+            entry.quadlet_options | default([]) +
+            (('restart_policy' in entry) | ternary([], [restart])) +
+            (_podman_container.enabled | ternary([install], [])),
+        })
+      }}
+  gwerlas_podman_container:
+    options: "{{ options }}"
+  loop: "{{ _podman_containers | rejectattr('state', 'eq', 'absent') }}"
+  loop_control:
+    loop_var: _podman_container
+    label: "{{ _podman_container.name }}"
+
+- name: Find the Quadlet files of the containers to remove
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  ansible.builtin.stat:
+    path: "{{ _podman_quadlet_file }}"
+  register: quadlet_files
+  loop: "{{ _podman_containers | selectattr('state', 'eq', 'absent') }}"
+  loop_control:
+    loop_var: _podman_container
+    label: "{{ _podman_container.name }}"
+
+- name: Stop the containers to remove
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  vars:
+    uid: "{{ ansible_facts.getent_passwd[_podman_container.run_as].1 }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
+  ansible.builtin.systemd:
+    name: "{{ _podman_quadlet_unit }}"
+    state: stopped
+    scope: "{{ (_podman_container.run_as == 'root') | ternary('system', 'user') }}"
+  loop: &quadlet_files_found >-
+    {{ quadlet_files.results | selectattr('stat.exists') | map(attribute='_podman_container') }}
+  loop_control:
+    loop_var: _podman_container
+    label: "{{ _podman_container.name }}"
+
+- name: Remove the Quadlet files of the containers to remove
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  ansible.builtin.file:
+    path: "{{ _podman_quadlet_file }}"
+    state: absent
+  register: removed
+  loop: *quadlet_files_found
+  loop_control:
+    loop_var: _podman_container
+    label: "{{ _podman_container.name }}"
+
+# A daemon reload is an action, not a state : `ansible.builtin.systemd` has
+# nothing to compare it against and reports `changed` every run. So it stays out
+# of the task below, and happens only when a unit file or a Quadlet file
+# changed : systemd generates the Quadlet units as it reloads.
+- name: Reload the unit files  # noqa no-handler
+  when: retired.changed or provisioned.changed or removed.changed
+  become: "{{ _podman_owner != ansible_facts.user_id }}"
+  become_user: "{{ _podman_owner }}"
+  vars:
+    uid: "{{ ansible_facts.getent_passwd[_podman_owner].1 }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
+  ansible.builtin.systemd:
+    daemon_reload: true
+    scope: "{{ (_podman_owner == 'root') | ternary('system', 'user') }}"
+  loop: "{{ _podman_containers | map(attribute='run_as') | unique | list }}"
+  loop_control:
+    loop_var: _podman_owner
+
+# A Quadlet unit cannot be enabled : its [Install] section is what starts it at
+# boot. `state` says what it is now, and a unit whose file changed restarts on
+# the new definition.
+- name: Run the containers
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  vars:
+    _podman_container: "{{ _podman_written._podman_container }}"
+    uid: "{{ ansible_facts.getent_passwd[_podman_container.run_as].1 }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
+  ansible.builtin.systemd:
+    name: "{{ _podman_quadlet_unit }}"
+    state: >-
+      {{
+        (_podman_container.state == 'stopped') |
+        ternary('stopped', _podman_written.changed | ternary('restarted', 'started'))
+      }}
+    scope: "{{ (_podman_container.run_as == 'root') | ternary('system', 'user') }}"
+  loop: "{{ provisioned.results }}"
+  loop_control:
+    loop_var: _podman_written
+    label: "{{ _podman_written._podman_container.name }}"

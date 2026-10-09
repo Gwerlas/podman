@@ -220,7 +220,7 @@ In this case, You have to set the `uid` property for each missing users.
 #### Containers running at boot
 
 Declaring a user `system: true` also enables systemd lingering for it, so its
-user instance starts with the machine. The rootless units generated for
+user instance starts with the machine. The rootless units of
 `podman_containers` need it : without lingering they only run while that user
 has a session open, and `enabled: true` on a container means "until they log
 out".
@@ -236,23 +236,18 @@ podman_containers:
     image: docker.io/nginx:latest
     run_as: nginx          # The user the play runs as by default
     enabled: true          # Start the unit at boot, true by default
-    generate_systemd:      # How podman writes the unit
-      container_prefix: app
+    state: started         # started by default
     publish:
       - 8080:80
 ```
 
-`run_as` is the user that owns the container. `root` gets a system unit, in
-`/etc/systemd/system/` ; anyone else a user unit, in `~/.config/systemd/user/`,
-which runs at boot only for a [lingering user](#containers-running-at-boot).
-Leave it out and the container runs as the user the play runs as — `root` under
-`become: true`.
+`run_as` is the user that owns the container. `root` gets a system unit ;
+anyone else a user unit, which runs at boot only for a
+[lingering user](#containers-running-at-boot). Leave it out and the container
+runs as the user the play runs as — `root` under `become: true`.
 
-`enabled: true` enables the unit and starts it. With `enabled: false`, podman
-starts the container itself and writes the unit without enabling it, so the
-container does not come back after a reboot.
-
-`run_as` and `enabled` are this role's own. Every other key is an option of the
+`run_as`, `enabled` and `state` are read by this role, which turns them into
+the unit described below. Every other key is an option of the
 [`containers.podman.podman_container`][podman_container module] module, passed
 on as it is : whatever the installed collection supports is available, and a
 key it does not know fails the play.
@@ -260,7 +255,66 @@ key it does not know fails the play.
 `module_defaults` set for `containers.podman.podman_container` do not reach
 these containers : write the options in each entry.
 
+Which unit a container gets depends on the Podman of the host.
+
 [podman_container module]: https://docs.ansible.com/ansible/latest/collections/containers/podman/podman_container_module.html
+
+#### Quadlet units
+
+From Podman 4.4 on, each container is a [Quadlet][] file, `<name>.container`,
+in `/etc/containers/systemd/` for `root` and `~/.config/containers/systemd/`
+for anyone else. systemd creates the container when it starts the unit,
+`<name>.service`, and restarts it on failure, unless the entry sets its own
+`restart_policy`.
+
+`enabled: true` adds an `[Install]` section, so the unit starts at boot ;
+`enabled: false` leaves it out. `state` is what the unit is now : `started`
+starts it, and restarts it when its file changed, `stopped` stops it, `absent`
+stops it and removes its file.
+
+`quadlet_filename` renames the file and the unit, and `quadlet_options` adds
+lines the module has no option for :
+
+```yaml
+podman_containers:
+  - name: web
+    image: docker.io/nginx:latest
+    quadlet_options:
+      - AutoUpdate=registry
+```
+
+`generate_systemd` has no say over these units. Its `path`, `container_prefix`
+and `separator` still tell where the unit of a generated container is, so the
+same entry serves a host of each kind.
+
+A host whose containers run on generated units — its Podman was older, or an
+earlier release of this role wrote them — switches on the next run : the role
+stops, disables and removes each generated unit, and the container it ran,
+then starts the Quadlet unit. Removing that container discards anything it
+wrote outside a volume : move such data to a volume before the run. The
+service is then `<name>.service` rather than `container-<name>.service` : a
+unit that depends on it, or a check that watches it, has to follow.
+
+[Quadlet]: https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html
+
+#### Generated units
+
+Below Podman 4.4 — Debian 11 and 12, Ubuntu 22.04 — the unit comes from
+`podman generate systemd`, `container-<name>.service`, in `/etc/systemd/system/`
+for `root` and `~/.config/systemd/user/` for anyone else, and restarts the
+container on failure. `generate_systemd` tells podman how to write it :
+
+```yaml
+podman_containers:
+  - name: web
+    image: docker.io/nginx:latest
+    generate_systemd:
+      container_prefix: app  # app-web.service
+```
+
+`enabled: true` enables the unit and starts it. With `enabled: false`, podman
+brings the container to its `state` itself and writes the unit without
+enabling it, so the container does not come back after a reboot.
 
 ### Podman configuration
 

@@ -1,0 +1,47 @@
+---
+podman_registries_config:
+  registry:
+    - location: docker.io
+      mirror:
+        - location: mirror.gcr.io
+podman_retries: 10
+podman_delay: 3
+podman_users:
+  - name: nginx
+    home: /data/web
+    create_home: false
+    password_lock: true
+    shell: /usr/bin/nologin
+    system: true
+    uid: 300
+# The containers of a host provisioned before Quadlet : prepare.yml runs them
+# on the units podman generates, converge.yml hands them to the role.
+upgrade_containers:
+  - run_as: nginx
+    name: web
+    image: docker.io/nginx:latest
+    publish:
+      - 8080:80
+  # Its unit is `app_custom.service`, off the default path : only the entry
+  # says where it is, and under which name.
+  - run_as: nginx
+    name: custom
+    image: docker.io/nginx:latest
+    generate_systemd:
+      path: /data/web/.local/share/systemd/user
+      container_prefix: app
+      separator: _
+    publish:
+      - 8081:80
+  # Before Quadlet, podman started this one itself, outside its unit.
+  - run_as: nginx
+    name: idle
+    image: docker.io/nginx:latest
+    enabled: false
+    publish:
+      - 8082:80
+  - run_as: root
+    name: rootful
+    image: docker.io/nginx:latest
+    publish:
+      - 8083:80

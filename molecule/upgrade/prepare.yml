@@ -1,0 +1,54 @@
+---
+- name: Prepare
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+# What the role did before Quadlet : podman creates each container and
+# generates its unit, which is then enabled, or podman starts the container
+# itself for one declared `enabled: false`.
+- name: Run the containers on the units podman generates
+  hosts: all
+  roles:
+    # Podman and its users, with nothing provisioned yet.
+    - gwerlas.podman
+  tasks:
+    - name: Create the containers and generate their units
+      become: true
+      become_user: "{{ item.run_as }}"
+      vars:
+        default_path: >-
+          {{ (item.run_as == 'root') | ternary('/etc/systemd/system/', '/data/web/.config/systemd/user/') }}
+      containers.podman.podman_container:
+        name: "{{ item.name }}"
+        image: "{{ item.image }}"
+        publish: "{{ item.publish }}"
+        state: "{{ (item.enabled | default(true)) | ternary('created', 'started') }}"
+        generate_systemd:
+          container_prefix: "{{ item.generate_systemd.container_prefix | default('container') }}"
+          separator: "{{ item.generate_systemd.separator | default(omit) }}"
+          names: true
+          path: "{{ item.generate_systemd.path | default(default_path) }}"
+          restart_policy: on-failure
+      loop: "{{ upgrade_containers }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Enable the generated units
+      become: true
+      become_user: "{{ item.run_as }}"
+      vars:
+        uid: "{{ (item.run_as == 'root') | ternary(0, 300) }}"
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
+      ansible.builtin.systemd:
+        name: >-
+          {{ item.generate_systemd.container_prefix | default('container') }}{{
+          item.generate_systemd.separator | default('-') }}{{ item.name }}
+        state: started
+        enabled: true
+        daemon_reload: true
+        scope: "{{ (item.run_as == 'root') | ternary('system', 'user') }}"
+      # The only `enabled` key of the list is the `false` of `idle`.
+      loop: "{{ upgrade_containers | selectattr('enabled', 'undefined') }}"
+      loop_control:
+        label: "{{ item.name }}"

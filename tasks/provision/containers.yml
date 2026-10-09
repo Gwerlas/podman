@@ -21,92 +21,10 @@
   ansible.builtin.getent:
     database: passwd
 
-- name: Containers
-  register: provisioned
-  become: "{{ container.run_as != ansible_facts.user_id }}"
-  become_user: "{{ container.run_as }}"
-  vars:
-    state: |-
-      {{
-        (container.enabled | default(true)) |
-        ternary(
-          'created',
-          container.state | default('started')
-        )
-      }}
-    default_systemd_path: |-
-      {{
-        (container.run_as == 'root') |
-        ternary(
-          '/etc/systemd/system/',
-          ansible_facts.getent_passwd[container.run_as].4 + '/.config/systemd/user/'
-        )
-      }}
-    # The entry without the role's own keys, over the role's defaults : the
-    # module refuses an option it does not know.
-    options: >-
-      {{
-        {
-          'generate_systemd': {
-            'container_prefix': 'container',
-            'names': true,
-            'path': default_systemd_path,
-            'restart_policy': 'on-failure',
-          },
-        } |
-        combine(
-          container | dict2items | rejectattr('key', 'in', _podman_containers_own_keys) | items2dict,
-          recursive=true,
-        ) |
-        combine({'state': state})
-      }}
-  gwerlas_podman_container:
-    options: "{{ options }}"
-  loop: "{{ _podman_containers }}"
-  loop_control:
-    loop_var: container
-    label: "{{ container.name }}"
+- name: Containers on Quadlet units
+  when: _podman_quadlet
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/provision/containers/quadlet.yml"
 
-# A daemon reload is an action, not a state : `ansible.builtin.systemd` has
-# nothing to compare it against and reports `changed` every run. So it stays out
-# of the task below, and happens only when podman rewrote a unit file.
-- name: Reload the unit files  # noqa no-handler
-  when: provisioned.changed
-  become: "{{ owner != ansible_facts.user_id }}"
-  become_user: "{{ owner }}"
-  vars:
-    uid: "{{ ansible_facts.getent_passwd[owner].1 }}"
-  environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
-    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
-  ansible.builtin.systemd:
-    daemon_reload: true
-    scope: "{{ (owner == 'root') | ternary('system', 'user') }}"
-  loop: "{{ _podman_containers | map(attribute='run_as') | unique | list }}"
-  loop_control:
-    loop_var: owner
-
-- name: Enable service
-  become: "{{ container.run_as != ansible_facts.user_id }}"
-  become_user: "{{ container.run_as }}"
-  vars:
-    prefix: |-
-      {{
-        container.generate_systemd.container_prefix |
-        default('container')
-      }}
-    # podman joins the prefix and the name with it, `-` unless told otherwise.
-    separator: "{{ container.generate_systemd.separator | default('-') }}"
-    uid: "{{ ansible_facts.getent_passwd[container.run_as].1 }}"
-  environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
-    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
-  ansible.builtin.systemd:
-    name: "{{ prefix }}{{ separator }}{{ container.name }}"
-    state: started
-    enabled: true
-    scope: "{{ (container.run_as == 'root') | ternary('system', 'user') }}"
-  loop: "{{ _podman_containers | rejectattr('enabled', 'false') | list }}"
-  loop_control:
-    loop_var: container
-    label: "{{ container.name }}"
+- name: Containers on the units podman generates
+  when: not _podman_quadlet
+  ansible.builtin.import_tasks: "{{ role_path }}/tasks/provision/containers/generated.yml"

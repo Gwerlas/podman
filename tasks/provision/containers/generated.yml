@@ -1,0 +1,67 @@
+---
+- name: Containers
+  register: provisioned
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  vars:
+    # The entry without the role's own keys, over the role's defaults : the
+    # module refuses an option it does not know.
+    options: >-
+      {{
+        {
+          'generate_systemd': {
+            'container_prefix': 'container',
+            'names': true,
+            'path': _podman_generated_unit_dir,
+            'restart_policy': 'on-failure',
+          },
+        } |
+        combine(
+          _podman_container | dict2items | rejectattr('key', 'in', _podman_containers_own_keys) | items2dict,
+          recursive=true,
+        ) |
+        combine({'state': _podman_container.enabled | ternary('created', _podman_container.state)})
+      }}
+  gwerlas_podman_container:
+    options: "{{ options }}"
+  loop: "{{ _podman_containers }}"
+  loop_control:
+    loop_var: _podman_container
+    label: "{{ _podman_container.name }}"
+
+# A daemon reload is an action, not a state : `ansible.builtin.systemd` has
+# nothing to compare it against and reports `changed` every run. So it stays out
+# of the task below, and happens only when podman rewrote a unit file.
+- name: Reload the unit files  # noqa no-handler
+  when: provisioned.changed
+  become: "{{ _podman_owner != ansible_facts.user_id }}"
+  become_user: "{{ _podman_owner }}"
+  vars:
+    uid: "{{ ansible_facts.getent_passwd[_podman_owner].1 }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
+  ansible.builtin.systemd:
+    daemon_reload: true
+    scope: "{{ (_podman_owner == 'root') | ternary('system', 'user') }}"
+  loop: "{{ _podman_containers | map(attribute='run_as') | unique | list }}"
+  loop_control:
+    loop_var: _podman_owner
+
+- name: Enable service
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  vars:
+    uid: "{{ ansible_facts.getent_passwd[_podman_container.run_as].1 }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ uid }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ uid }}/bus"
+  ansible.builtin.systemd:
+    name: "{{ _podman_generated_unit }}"
+    state: started
+    enabled: true
+    scope: "{{ (_podman_container.run_as == 'root') | ternary('system', 'user') }}"
+  loop: "{{ _podman_containers | rejectattr('enabled', 'false') | list }}"
+  loop_control:
+    loop_var: _podman_container
+    label: "{{ _podman_container.name }}"

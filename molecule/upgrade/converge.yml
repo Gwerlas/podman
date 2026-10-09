@@ -1,0 +1,9 @@
+---
+# A host whose containers run on the units podman generated, left by
+# prepare.yml, converged with the same inventory.
+- name: Converge
+  hosts: all
+  vars:
+    podman_containers: "{{ upgrade_containers }}"
+  roles:
+    - gwerlas.podman

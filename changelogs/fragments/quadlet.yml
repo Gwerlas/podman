@@ -1,0 +1,3 @@
+breaking_changes:
+  - >-
+    Run each ``podman_containers`` entry on a Quadlet unit, ``<name>.service``, wherever Podman is 4.4 or later, in place of the ``container-<name>.service`` that ``podman generate systemd`` wrote; the next run retires the generated units and removes their containers, so anything a container wrote outside a volume is lost: move it to a volume before upgrading. A unit or a check that refers to ``container-<name>`` has to name ``<name>`` instead. Debian 11 and 12 and Ubuntu 22.04 keep the generated units. (`#20 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/20>`__)

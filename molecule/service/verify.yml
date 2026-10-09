@@ -1,6 +1,10 @@
 ---
 - name: Verify that myapp user can run a container
   hosts: all
+  vars:
+    # Podman 4.4 brought Quadlet : from there on, the role writes Quadlet files
+    # rather than generating the units.
+    quadlet: "{{ (rootful_info.stdout | from_json).version.Version is version('4.4', '>=') }}"
   tasks:
     # nginx keeps its home in /data/web, so its store sits off the default
     # path and gets a rule of its own. The home is not ours to label : it is a
@@ -204,15 +208,72 @@
 
     - name: Read the unit of the container of the user the play runs as
       ansible.builtin.systemd:
-        name: container-mine
+        name: "{{ quadlet | ternary('mine', 'container-mine') }}"
         scope: user
       register: mine_unit
 
-    - name: Check that unit is enabled in that user's instance
+    # A Quadlet unit is generated, never enabled : its [Install] section is
+    # what hooks it to default.target.
+    - name: Check that unit starts with that user's instance
       ansible.builtin.assert:
         that:
-          - mine_unit.status.UnitFileState == 'enabled'
-        fail_msg: "UnitFileState={{ mine_unit.status.UnitFileState }}"
+          - >-
+            quadlet | ternary(
+              'default.target' in mine_unit.status.WantedBy | default(''),
+              mine_unit.status.UnitFileState == 'enabled'
+            )
+        fail_msg: >-
+          UnitFileState={{ mine_unit.status.UnitFileState | default('') }}
+          WantedBy={{ mine_unit.status.WantedBy | default('') }}
+
+    - name: Look for the Quadlet files
+      when: quadlet
+      become: true
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /data/web/.config/containers/systemd/nginx.container
+        - /etc/containers/systemd/rootful.container
+      register: quadlet_files
+
+    - name: Check a rootless and a rootful container each have their file
+      when: quadlet
+      ansible.builtin.assert:
+        that:
+          - quadlet_files.results | rejectattr('stat.exists') | list == []
+        fail_msg: >-
+          missing : {{ quadlet_files.results | rejectattr('stat.exists') | map(attribute='item') | list }}
+
+    - name: Read the Quadlet unit of a rootless container
+      when: quadlet
+      become: true
+      become_user: nginx
+      environment:
+        XDG_RUNTIME_DIR: /run/user/300
+        DBUS_SESSION_BUS_ADDRESS: unix:path=/run/user/300/bus
+      ansible.builtin.systemd:
+        name: nginx
+        scope: user
+      register: nginx_unit
+
+    - name: Read the Quadlet unit of the rootful container
+      when: quadlet
+      become: true
+      ansible.builtin.systemd:
+        name: rootful
+      register: rootful_unit
+
+    - name: Check the Quadlet units run and restart on failure
+      when: quadlet
+      ansible.builtin.assert:
+        that:
+          - nginx_unit.status.ActiveState == 'active'
+          - rootful_unit.status.ActiveState == 'active'
+          - nginx_unit.status.Restart == 'on-failure'
+          - rootful_unit.status.Restart == 'on-failure'
+        fail_msg: >-
+          nginx={{ nginx_unit.status.ActiveState | default('?') }}/{{ nginx_unit.status.Restart | default('?') }}
+          rootful={{ rootful_unit.status.ActiveState | default('?') }}/{{ rootful_unit.status.Restart | default('?') }}
 
     - name: Read the container of the user the play runs as
       containers.podman.podman_container_info:
@@ -254,3 +315,26 @@
         port: 8081
         state: stopped
         timeout: 30
+
+    - name: List the containers of a lingering user after reboot
+      become: true
+      become_user: nginx
+      containers.podman.podman_container_info:
+      register: nginx_containers
+
+    - name: List the rootful containers after reboot
+      become: true
+      containers.podman.podman_container_info:
+      register: rootful_containers
+
+    - name: Check the enabled containers, and only them, run after reboot
+      vars:
+        nginx_running: >-
+          {{ nginx_containers.containers | selectattr('State.Running') | map(attribute='Name') | sort }}
+        rootful_running: >-
+          {{ rootful_containers.containers | selectattr('State.Running') | map(attribute='Name') | sort }}
+      ansible.builtin.assert:
+        that:
+          - nginx_running == ['named', 'nginx']
+          - rootful_running == ['rootful']
+        fail_msg: "nginx={{ nginx_running }} root={{ rootful_running }}"

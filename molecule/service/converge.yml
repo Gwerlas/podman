@@ -61,9 +61,11 @@
         enabled: false
         publish:
           - 8081:80
-      # A unit named `app_named` rather than `container-named` : the service
-      # to enable has to be looked up under the prefix and separator podman
-      # was given, or 8082 stays silent after the reboot.
+      # Where podman generates the units, one named `app_named` rather than
+      # `container-named` : the service to enable has to be looked up under the
+      # prefix and separator podman was given, or 8082 stays silent after the
+      # reboot. Where Quadlet runs it, the keys have no say, and the unit is
+      # `named.service`.
       - run_as: nginx
         name: named
         image: docker.io/nginx:latest
