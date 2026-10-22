@@ -8,15 +8,15 @@
         - podman_version is version('3.0', '>=')
       block:
         - name: Podman socket
-          become: "{{ user.name != ansible_facts.user_id }}"
-          become_user: "{{ user.name }}"
+          become: "{{ _podman_user.name != ansible_facts.user_id }}"
+          become_user: "{{ _podman_user.name }}"
           ansible.builtin.systemd:
             scope: user
             name: podman.socket
             enabled: true
           loop: "{{ podman_users }}"
           loop_control:
-            loop_var: user
+            loop_var: _podman_user
         
         - name: Docker environment variables
           become: true

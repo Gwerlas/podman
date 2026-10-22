@@ -13,9 +13,9 @@
 - name: Wrappers
   become: "{{ not result.stat.writeable }}"
   ansible.builtin.template:
-    src: "{{ wrapper.template | default('wrappers/script.sh.j2') }}"
-    dest: "{{ podman_wrappers_path }}/{{ wrapper.command | default(wrapper.name) }}"
+    src: "{{ _podman_wrapper.template | default('wrappers/script.sh.j2') }}"
+    dest: "{{ podman_wrappers_path }}/{{ _podman_wrapper.command | default(_podman_wrapper.name) }}"
     mode: "0755"
   loop: "{{ podman_wrappers }}"
   loop_control:
-    loop_var: wrapper
+    loop_var: _podman_wrapper

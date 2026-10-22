@@ -1,0 +1,3 @@
+breaking_changes:
+  - >-
+    Render a ``podman_wrappers`` template under the variable ``_podman_wrapper`` instead of ``wrapper``, as the role no longer lets its loop variables take the name of a user's. A template of your own, set with the ``template`` key of a wrapper, that reads ``wrapper`` has to read ``_podman_wrapper`` instead; the template the role ships is updated. (`#24 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/24>`__)

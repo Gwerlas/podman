@@ -4,7 +4,7 @@
   vars:
     params:
       files:
-        - "{{ vars_file }}"
+        - "{{ _podman_vars_file }}"
         - empty.yml
       paths:
         - "{{ role_path }}/vars"
@@ -14,7 +14,7 @@
     - "{{ ansible_facts.distribution | lower }}{{ ansible_facts.distribution_major_version }}.yml"    # debian11
     - "{{ ansible_facts.distribution | lower }}-{{ ansible_facts.distribution_release | lower }}.yml" # ubuntu-jammy
   loop_control:
-    loop_var: vars_file
+    loop_var: _podman_vars_file
 
 # Only the container store needs a context from us : podman labels the layers
 # container_file_t itself, and asks of its graphroot only that it not be

@@ -17,7 +17,7 @@ podman_wrapper_bind_source "{{ spec.split(':') | first }}"
 #!/bin/sh
 # Ansible managed - do not edit
 
-{% set data = podman_wrappers_values | combine(wrapper) %}
+{% set data = podman_wrappers_values | combine(_podman_wrapper) %}
 {% set wrapper = data %}
 {% if not wrapper.can_extends | default(false) %}
 # Reset options to prevent user's customizations
