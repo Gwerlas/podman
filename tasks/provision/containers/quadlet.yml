@@ -6,7 +6,7 @@
   become_user: "{{ _podman_container.run_as }}"
   ansible.builtin.stat:
     path: "{{ [_podman_generated_unit_dir, _podman_generated_unit + '.service'] | path_join }}"
-  register: generated_units
+  register: _podman_generated_units
   loop: "{{ _podman_containers }}"
   loop_control:
     loop_var: _podman_container
@@ -26,7 +26,7 @@
     enabled: false
     scope: "{{ (_podman_container.run_as == 'root') | ternary('system', 'user') }}"
   loop: &generated_units_found >-
-    {{ generated_units.results | selectattr('stat.exists') | map(attribute='_podman_container') }}
+    {{ _podman_generated_units.results | selectattr('stat.exists') | map(attribute='_podman_container') }}
   loop_control:
     loop_var: _podman_container
     label: "{{ _podman_container.name }}"
@@ -51,14 +51,14 @@
   ansible.builtin.file:
     path: "{{ [_podman_generated_unit_dir, _podman_generated_unit + '.service'] | path_join }}"
     state: absent
-  register: retired
+  register: _podman_retired
   loop: *generated_units_found
   loop_control:
     loop_var: _podman_container
     label: "{{ _podman_container.name }}"
 
 - name: Containers
-  register: provisioned
+  register: _podman_provisioned
   become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
   become_user: "{{ _podman_container.run_as }}"
   vars:
@@ -105,7 +105,7 @@
   become_user: "{{ _podman_container.run_as }}"
   ansible.builtin.stat:
     path: "{{ _podman_quadlet_file }}"
-  register: quadlet_files
+  register: _podman_quadlet_files
   loop: "{{ _podman_containers | selectattr('state', 'eq', 'absent') }}"
   loop_control:
     loop_var: _podman_container
@@ -124,7 +124,7 @@
     state: stopped
     scope: "{{ (_podman_container.run_as == 'root') | ternary('system', 'user') }}"
   loop: &quadlet_files_found >-
-    {{ quadlet_files.results | selectattr('stat.exists') | map(attribute='_podman_container') }}
+    {{ _podman_quadlet_files.results | selectattr('stat.exists') | map(attribute='_podman_container') }}
   loop_control:
     loop_var: _podman_container
     label: "{{ _podman_container.name }}"
@@ -135,7 +135,7 @@
   ansible.builtin.file:
     path: "{{ _podman_quadlet_file }}"
     state: absent
-  register: removed
+  register: _podman_removed
   loop: *quadlet_files_found
   loop_control:
     loop_var: _podman_container
@@ -146,7 +146,7 @@
 # of the task below, and happens only when a unit file or a Quadlet file
 # changed : systemd generates the Quadlet units as it reloads.
 - name: Reload the unit files  # noqa no-handler
-  when: retired.changed or provisioned.changed or removed.changed
+  when: _podman_retired.changed or _podman_provisioned.changed or _podman_removed.changed
   become: "{{ _podman_owner != ansible_facts.user_id }}"
   become_user: "{{ _podman_owner }}"
   vars:
@@ -181,7 +181,7 @@
         ternary('stopped', _podman_written.changed | ternary('restarted', 'started'))
       }}
     scope: "{{ (_podman_container.run_as == 'root') | ternary('system', 'user') }}"
-  loop: "{{ provisioned.results }}"
+  loop: "{{ _podman_provisioned.results }}"
   loop_control:
     loop_var: _podman_written
     label: "{{ _podman_written._podman_container.name }}"

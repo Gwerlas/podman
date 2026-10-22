@@ -28,10 +28,10 @@
       failed_when: false
       ansible.builtin.command:
         cmd: dnf list {{ _podman_package_groups.compose | join(' ') }}
-      register: podman_compose_lookup
+      register: _podman_compose_lookup
 
     - name: Packages - Refuse a compose package no repository provides
-      when: podman_compose_lookup.rc != 0
+      when: _podman_compose_lookup.rc != 0
       ansible.builtin.fail:
         msg: >-
           {{ _podman_package_groups.compose | join(', ') }} is in none of the enabled
@@ -43,13 +43,13 @@
   become: true
   ansible.builtin.package:
     name: "{{ podman_packages }}"
-  register: result
-  until: result.failed == false
+  register: _podman_install
+  until: _podman_install.failed == false
   retries: "{{ podman_retries }}"
   delay: "{{ podman_delay }}"
 
 - name: Packages - Update facts   # noqa no-handler
-  when: result.changed
+  when: _podman_install.changed
   ansible.builtin.import_tasks: "{{ role_path }}/tasks/facts.yml"
 
 # Podman has to be installed before we can link the docker command to it.

@@ -7,10 +7,10 @@
     cmd: docker --version
   changed_when: false
   failed_when: false
-  register: docker_version
+  register: _podman_docker_version
 
 - name: Mimic Docker - Fail because Docker is installed
-  when: docker_version.stdout is match('Docker')
+  when: _podman_docker_version.stdout is match('Docker')
   ansible.builtin.fail:
     msg: >-
       Docker is installed on this host, refusing to mimic it.

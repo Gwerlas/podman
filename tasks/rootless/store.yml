@@ -5,7 +5,7 @@
 # graphroot sits depends on the host — an operator moves it with
 # podman_storage_config — so ask podman rather than guess.
 - name: Rootless - Locate the container store
-  when: podman_labels_store | bool
+  when: _podman_labels_store | bool
   become: true
   become_user: "{{ _podman_user.name }}"
   vars:
@@ -16,7 +16,7 @@
   environment:
     HOME: "{{ ansible_facts['getent_passwd'][_podman_user.name].4 | default(default_home) }}"
   containers.podman.podman_system_info:
-  register: podman_graphroots
+  register: _podman_graphroots
   loop: "{{ podman_users }}"
   loop_control:
     loop_var: _podman_user
@@ -40,11 +40,11 @@
     state: directory
     owner: "{{ _podman_found._podman_user.name }}"
     mode: "0700"
-  loop: "{{ podman_graphroots.results | default([]) }}"
+  loop: "{{ _podman_graphroots.results | default([]) }}"
   loop_control:
     loop_var: _podman_found
     label: "{{ _podman_found._podman_user.name }}"
-  register: podman_store_dirs
+  register: _podman_store_dirs
 
 # The reference is a path under /home, the home root the SELinux policy carries
 # its user_home rules for — never the user's real home, which is the very path
@@ -69,18 +69,18 @@
     target: "{{ graphroot }}"
     substitute: "{{ labelled_reference }}"
     state: present
-  loop: "{{ podman_graphroots.results | default([]) }}"
+  loop: "{{ _podman_graphroots.results | default([]) }}"
   loop_control:
     loop_var: _podman_found
     label: "{{ _podman_found._podman_user.name }}"
-  register: podman_store_contexts
+  register: _podman_store_contexts
 
 # The rule does not reach back over what already exists, so the relabel runs
 # whenever either half was just put in place.
 # Not a handler : those run at the end of the play, and the store is filled
 # before that, by the provisioning tasks this one has to precede.
 - name: Rootless - Relabel a container store kept outside /home  # noqa no-handler
-  when: _podman_context.changed or podman_store_dirs.results[_podman_index].changed | default(false)
+  when: _podman_context.changed or _podman_store_dirs.results[_podman_index].changed | default(false)
   become: true
   ansible.builtin.command:
     argv:
@@ -88,7 +88,7 @@
       - -R
       - "{{ _podman_context._podman_found.podman_system_info.store.graphRoot }}"
   changed_when: true
-  loop: "{{ podman_store_contexts.results | default([]) }}"
+  loop: "{{ _podman_store_contexts.results | default([]) }}"
   loop_control:
     loop_var: _podman_context
     index_var: _podman_index

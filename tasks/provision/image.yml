@@ -8,18 +8,18 @@
     - name: Image info
       containers.podman.podman_image_info:
         name: "{{ _podman_image.name }}"
-      register: infos
+      register: _podman_image_infos
 
     - name: Images
       containers.podman.podman_image:
         name: "{{ _podman_image.name }}"
         password: "{{ _podman_image.password | default(omit) }}"
         username: "{{ _podman_image.username | default(omit) }}"
-      register: result
-      until: not result.failed
+      register: _podman_image_pull
+      until: not _podman_image_pull.failed
       retries: "{{ podman_retries }}"
       delay: "{{ podman_delay }}"
       # ... and compare the pulled image ID
       changed_when: >-
-        (result.image | map(attribute='Id') | list | last | default(None))
-        != (infos.images | map(attribute='Id') | list | last | default(None))
+        (_podman_image_pull.image | map(attribute='Id') | list | last | default(None))
+        != (_podman_image_infos.images | map(attribute='Id') | list | last | default(None))

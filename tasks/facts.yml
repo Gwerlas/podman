@@ -22,15 +22,15 @@
 # depends on the host, so the task asks podman rather than guessing.
 - name: Facts - SELinux is enforced
   ansible.builtin.set_fact:
-    podman_labels_store: >-
+    _podman_labels_store: >-
       {{
         ansible_facts.selinux.status | default('disabled') == 'enabled'
         and podman_users | length > 0
       }}
 
-# Not `result` : packages.yml imports this file under `when: result.changed`,
-# and a probe registered under that name would turn the condition false for
-# every task after it -- the fact below included.
+# Not `_podman_install` : packages.yml imports this file under
+# `when: _podman_install.changed`, and a probe registered under that name would
+# turn the condition false for every task after it -- the fact below included.
 #
 # Not podman_system_info either : `podman system info` opens the store, and the
 # database it creates then pins the graph driver, before config.yml has written
@@ -41,7 +41,7 @@
   changed_when: false
   check_mode: false
   failed_when: false
-  register: podman_version_probe
+  register: _podman_version_probe
 
 # Portage installs what the tree resolves to, which depends on the keywords the
 # host accepts : the stable branch carries podman 5 and the testing one podman 6.
@@ -50,31 +50,32 @@
 - name: Get the version Portage would install
   when:
     - ansible_facts.pkg_mgr == "portage"
-    - podman_version_probe.rc != 0
+    - _podman_version_probe.rc != 0
   become: true
   ansible.builtin.command:
     cmd: emerge --pretend --noreplace --nospinner --color n app-containers/podman
   changed_when: false
   check_mode: false
   failed_when: false
-  register: podman_portage_probe
+  register: _podman_portage_probe
 
 # One task, so a fact cannot read another of them : the expected version comes
-# from the probes, not from podman_version. podman_labels_store stays a task of
-# its own above, because podman_packages reads it through _podman_packages_computed.
+# from the probes, not from podman_version. _podman_labels_store stays a task
+# of its own above, because podman_packages reads it through
+# _podman_packages_computed.
 - name: Facts - Global
   vars:
-    podman_installed_version: >-
-      {{ (podman_version_probe.rc == 0) | ternary(podman_version_probe.stdout.split(' ')[2], None) }}
+    _podman_installed_version: >-
+      {{ (_podman_version_probe.rc == 0) | ternary(_podman_version_probe.stdout.split(' ')[2], None) }}
   ansible.builtin.set_fact:
     cacheable: true
-    podman_version: "{{ podman_installed_version }}"
+    podman_version: "{{ _podman_installed_version }}"
     podman_packages: "{{ _podman_packages_computed }}"
     _podman_expected_version: >-
       {{
-        podman_installed_version
-        if podman_installed_version is not none
-        else (podman_portage_probe.stdout | default('') | regex_findall('app-containers/podman-([0-9][0-9.]*)') | first | default(''))
+        _podman_installed_version
+        if _podman_installed_version is not none
+        else (_podman_portage_probe.stdout | default('') | regex_findall('app-containers/podman-([0-9][0-9.]*)') | first | default(''))
       }}
 
 # Without a version the role cannot tell which of the two bases to write, and
@@ -88,8 +89,8 @@
     - podman_version is none
     - _podman_expected_version | length == 0
   vars:
-    podman_probe_tail: >-
-      {{ ((podman_portage_probe.stdout_lines + podman_portage_probe.stderr_lines) | select | list)[-10:] | join(' | ') }}
+    _podman_probe_tail: >-
+      {{ ((_podman_portage_probe.stdout_lines + _podman_portage_probe.stderr_lines) | select | list)[-10:] | join(' | ') }}
   ansible.builtin.fail:
     msg: |-
-      Portage did not resolve app-containers/podman (emerge exited with {{ podman_portage_probe.rc }}), so the role cannot tell which version it will install, nor which storage.conf that version needs. Fix what emerge reports, then run the role again : {{ podman_probe_tail }}
+      Portage did not resolve app-containers/podman (emerge exited with {{ _podman_portage_probe.rc }}), so the role cannot tell which version it will install, nor which storage.conf that version needs. Fix what emerge reports, then run the role again : {{ _podman_probe_tail }}

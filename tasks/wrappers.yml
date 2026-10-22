@@ -8,10 +8,10 @@
 - name: Wrapper's path informations
   ansible.builtin.stat:
     path: "{{ podman_wrappers_path }}"
-  register: result
+  register: _podman_wrappers_path_stat
 
 - name: Wrappers
-  become: "{{ not result.stat.writeable }}"
+  become: "{{ not _podman_wrappers_path_stat.stat.writeable }}"
   ansible.builtin.template:
     src: "{{ _podman_wrapper.template | default('wrappers/script.sh.j2') }}"
     dest: "{{ podman_wrappers_path }}/{{ _podman_wrapper.command | default(_podman_wrapper.name) }}"

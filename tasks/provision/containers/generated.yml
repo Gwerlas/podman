@@ -1,6 +1,6 @@
 ---
 - name: Containers
-  register: provisioned
+  register: _podman_provisioned
   become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
   become_user: "{{ _podman_container.run_as }}"
   vars:
@@ -33,7 +33,7 @@
 # nothing to compare it against and reports `changed` every run. So it stays out
 # of the task below, and happens only when podman rewrote a unit file.
 - name: Reload the unit files  # noqa no-handler
-  when: provisioned.changed
+  when: _podman_provisioned.changed
   become: "{{ _podman_owner != ansible_facts.user_id }}"
   become_user: "{{ _podman_owner }}"
   vars:
