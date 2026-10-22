@@ -1,5 +1,5 @@
 ---
-packages:
+_podman_package_groups:
   compose:
     - podman-compose
   docker:
@@ -17,15 +17,19 @@ packages:
   # packages it.
   selinux: []
 
-packages_computed: |
+_podman_packages_computed: |
   {{
-    packages.podman +
-    ((podman_users | length > 0 and 'rootless' in packages) | ternary(packages.rootless, [])) +
-    ((podman_labels_store | default(false) | bool and 'selinux' in packages)
-     | ternary(packages.selinux, [])) +
-    ((podman_compose_install and 'compose' in packages) | ternary(packages.compose, [])) +
-    ((podman_mimic_docker and 'docker' in packages) | ternary(packages.docker, [])) +
-    ((podman_toolbox_install and 'toolbox' in packages) | ternary(packages.toolbox, [])) |
+    _podman_package_groups.podman +
+    ((podman_users | length > 0 and 'rootless' in _podman_package_groups)
+     | ternary(_podman_package_groups.rootless, [])) +
+    ((podman_labels_store | default(false) | bool and 'selinux' in _podman_package_groups)
+     | ternary(_podman_package_groups.selinux, [])) +
+    ((podman_compose_install and 'compose' in _podman_package_groups)
+     | ternary(_podman_package_groups.compose, [])) +
+    ((podman_mimic_docker and 'docker' in _podman_package_groups)
+     | ternary(_podman_package_groups.docker, [])) +
+    ((podman_toolbox_install and 'toolbox' in _podman_package_groups)
+     | ternary(_podman_package_groups.toolbox, [])) |
     flatten
   }}
 

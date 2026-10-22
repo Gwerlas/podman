@@ -16,11 +16,11 @@
       Docker is installed on this host, refusing to mimic it.
       Set podman_mimic_docker to false or remove Docker first.
 
-# Distributions shipping a podman-docker package declare it in packages.docker,
+# Distributions shipping a podman-docker package declare it in _podman_package_groups.docker,
 # even empty when the wrapper comes from elsewhere (Gentoo USE flag). The
 # symlink is only for the others.
 - name: Mimic Docker - Symlink docker to podman
-  when: "'docker' not in packages"
+  when: "'docker' not in _podman_package_groups"
   become: true
   ansible.builtin.file:
     src: /usr/bin/podman

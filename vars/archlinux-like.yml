@@ -1,5 +1,5 @@
 ---
-packages:
+_podman_package_groups:
   compose:
     - podman-compose
     - podman-dnsname

@@ -3,11 +3,11 @@
   become: true
   block:
     - name: Config - Kernel
-      when: sysctl is defined
+      when: _podman_sysctl is defined
       ansible.posix.sysctl:
         name: "{{ item.name }}"
         value: "{{ item.value }}"
-      loop: "{{ sysctl }}"
+      loop: "{{ _podman_sysctl }}"
 
     - name: Config - Directory
       ansible.builtin.file:

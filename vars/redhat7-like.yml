@@ -1,5 +1,5 @@
 ---
-packages:
+_podman_package_groups:
   podman:
     - podman
   rootless:
@@ -7,6 +7,6 @@ packages:
   selinux:
     - policycoreutils-python-utils
 
-sysctl:
+_podman_sysctl:
   - name: user.max_user_namespaces
     value: 15000

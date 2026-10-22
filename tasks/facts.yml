@@ -61,7 +61,7 @@
 
 # One task, so a fact cannot read another of them : the expected version comes
 # from the probes, not from podman_version. podman_labels_store stays a task of
-# its own above, because podman_packages reads it through packages_computed.
+# its own above, because podman_packages reads it through _podman_packages_computed.
 - name: Facts - Global
   vars:
     podman_installed_version: >-
@@ -69,7 +69,7 @@
   ansible.builtin.set_fact:
     cacheable: true
     podman_version: "{{ podman_installed_version }}"
-    podman_packages: "{{ packages_computed }}"
+    podman_packages: "{{ _podman_packages_computed }}"
     _podman_expected_version: >-
       {{
         podman_installed_version
