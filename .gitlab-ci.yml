@@ -76,6 +76,32 @@ ansible-lint:
           - vars/**/*
   script: ansible-lint
 
+# The same lint, on the role as a user installs it, under `roles/<name>/`.
+# `var-naming[no-role-prefix]` finds the role's name from that path, so at the
+# root of a repository it stays silent about a variable the role forgot to
+# prefix, and reports it in every play that depends on the role.
+ansible-lint-installed:
+  image: gwerlas/ansible-lint
+  rules:
+    - *on-default-branch
+    - changes:
+        compare_to: refs/heads/main
+        paths:
+          - .config/**/*
+          - .gitlab-ci.yml
+          - .yamllint
+          - action_plugins/**/*
+          - defaults/**/*
+          - filter_plugins/**/*
+          - handlers/**/*
+          - jobs/ansible-lint-installed
+          - meta/**/*
+          - requirements.yml
+          - tasks/**/*
+          - templates/**/*
+          - vars/**/*
+  script: jobs/ansible-lint-installed
+
 # ansible-lint never reads .j2 files, so a template broken at the syntax level
 # would otherwise ship through a green pipeline. j2lint publishes no image,
 # hence the install here; `changes` keeps that cost on the pipelines that touch

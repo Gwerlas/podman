@@ -1,0 +1,24 @@
+#!/bin/sh
+# Lint the role under roles/podman/, where var-naming[no-role-prefix] can tell
+# which role a file belongs to; at the root of a repository it stays silent.
+set -eu
+
+root=$(cd "$(dirname "$0")/.." && pwd)
+play=$(mktemp -d)
+trap 'rm -rf "$play"' EXIT
+
+mkdir -p "$play/roles/podman"
+
+# Every top-level directory but the ones that are not the role's, so a
+# directory the role gains later is linted without anyone naming it here.
+for dir in "$root"/*/; do
+  case $(basename "$dir") in
+    changelogs | jobs | molecule | scripts | tests) ;;
+    *) cp -R "$dir" "$play/roles/podman/" ;;
+  esac
+done
+
+cp -R "$root/.config" "$root/.yamllint" "$root/requirements.yml" "$play/"
+
+cd "$play"
+ansible-lint -c .config/ansible-lint.yml -x role-name roles/podman

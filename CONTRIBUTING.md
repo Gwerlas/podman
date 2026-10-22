@@ -311,6 +311,19 @@ community.general.portage:
 
 The list-of-one form reads as a multi-package call nobody trimmed.
 
+Naming variables
+----------------
+
+Every variable the role defines for itself, loop and registered variables
+included, starts with `_podman_`; the ones a user may set start with `podman_`.
+`ansible-lint` only checks that once the role sits under `roles/<name>/`, which
+is how a user installs it, so the `ansible-lint-installed` job lints a copy
+there. To reproduce it locally, from any directory :
+
+```sh
+jobs/ansible-lint-installed
+```
+
 Editing templates
 -----------------
 
