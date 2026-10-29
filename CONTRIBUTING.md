@@ -202,6 +202,12 @@ Test the wrappers, and what their first call has to create :
 molecule test -s wrapper
 ```
 
+Every scenario runs Molecule's `check` step after `idempotence` : the role
+converges in check mode on the host it just set up, as the handbook's
+[Dry-run a host already set up][handbook-dry-run] asks. The sequence is set
+once, in `.config/molecule/config.yml`, which Molecule merges under each
+scenario's `molecule.yml`.
+
 A scenario always converges the whole role, so none of them runs a tag on its
 own. The `tagged-run` job does, for `wrappers` and `provision`, in a container ;
 reproduce it with the image it uses :
@@ -445,6 +451,7 @@ development belongs in that list.
 
 [handbook]: https://gitlab.com/yoanncolin/handbook/-/blob/main/README.md
 [handbook-code]: https://gitlab.com/yoanncolin/handbook/-/blob/main/code.md
+[handbook-dry-run]: https://gitlab.com/yoanncolin/handbook/-/blob/main/code.md#dry-run-a-host-already-set-up
 [handbook-code-test]: https://gitlab.com/yoanncolin/handbook/-/blob/main/code.md#test-what-the-user-gets
 [handbook-git]: https://gitlab.com/yoanncolin/handbook/-/blob/main/git.md
 [handbook-documentation]: https://gitlab.com/yoanncolin/handbook/-/blob/main/documentation.md

@@ -1,0 +1,19 @@
+---
+# Molecule's default sequence, with `check` after `idempotence` : the role
+# dry-runs a host it already set up, and fails there if a read it needs is
+# skipped in check mode.
+scenario:
+  test_sequence:
+    - dependency
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    - prepare
+    - converge
+    - idempotence
+    - check
+    - side_effect
+    - verify
+    - cleanup
+    - destroy

@@ -129,6 +129,13 @@ You can filter on some specific tasks using this tags :
 - `users` : Rootless directories, subgids and subuids
 - `wrappers` : [Wrappers](#wrappers)
 
+Check mode
+----------
+
+A `--check` run targets a host the role already set up : it shows what a run
+would change there. On a fresh host it may fail, as nothing is installed yet
+for the tasks that read what Podman reports.
+
 Role Variables
 --------------
 
