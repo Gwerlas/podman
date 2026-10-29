@@ -51,6 +51,8 @@
   when:
     - ansible_facts.pkg_mgr == "portage"
     - _podman_version_probe.rc != 0
+  # Escalated because the install it predicts is : a probe that sees less than
+  # the install would name another version.
   become: true
   ansible.builtin.command:
     cmd: emerge --pretend --noreplace --nospinner --color n app-containers/podman

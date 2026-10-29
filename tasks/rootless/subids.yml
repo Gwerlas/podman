@@ -3,13 +3,13 @@
   when:
     - _podman_user.name != 'root'
     - _podman_user.name in ansible_facts['getent_passwd'] or 'subuid_starts' in _podman_user
-  become: true
   vars:
     uid: "{{ ansible_facts['getent_passwd'][_podman_user.name].1 | default(_podman_user.uid) }}"
     subuid_starts: "{{ _podman_user.subuid_starts | default(uid | int | bitwise_shift_left(16)) }}"
     subuid_length: "{{ _podman_user.subuid_length | default(65536) }}"
   block:
     - name: Rootless - Set subuids
+      become: true
       ansible.builtin.lineinfile:
         path: /etc/subuid
         regexp: "^{{ _podman_user.name }}:"
@@ -23,6 +23,7 @@
         loop_var: _podman_user
 
     - name: Rootless - Set subgids
+      become: true
       vars:
         subgid_starts: "{{ _podman_user.subgid_starts | default(subuid_starts) }}"
         subgid_length: "{{ _podman_user.subgid_length | default(subuid_length) }}"

@@ -22,7 +22,6 @@
     # `list`, not `list --available` : the latter finds nothing once the
     # package is installed, and every converge after the first would fail.
     - name: Packages - Look for the compose packages
-      become: true
       check_mode: false
       changed_when: false
       failed_when: false

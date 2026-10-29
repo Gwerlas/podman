@@ -1,25 +1,26 @@
 ---
-- name: User escalation
+# Due to an idempotency issue in containers.podman.podman_image, we have to get informations first...
+- name: Image info
   become: "{{ 'owner' in _podman_image }}"
   become_user: "{{ _podman_image.owner | default(omit) }}"
   no_log: "{{ 'password' in _podman_image }}"
-  block:
-    # Due to an idempotency issue in containers.podman.podman_image, we have to get informations first...
-    - name: Image info
-      containers.podman.podman_image_info:
-        name: "{{ _podman_image.name }}"
-      register: _podman_image_infos
+  containers.podman.podman_image_info:
+    name: "{{ _podman_image.name }}"
+  register: _podman_image_infos
 
-    - name: Images
-      containers.podman.podman_image:
-        name: "{{ _podman_image.name }}"
-        password: "{{ _podman_image.password | default(omit) }}"
-        username: "{{ _podman_image.username | default(omit) }}"
-      register: _podman_image_pull
-      until: not _podman_image_pull.failed
-      retries: "{{ podman_retries }}"
-      delay: "{{ podman_delay }}"
-      # ... and compare the pulled image ID
-      changed_when: >-
-        (_podman_image_pull.image | map(attribute='Id') | list | last | default(None))
-        != (_podman_image_infos.images | map(attribute='Id') | list | last | default(None))
+- name: Images
+  become: "{{ 'owner' in _podman_image }}"
+  become_user: "{{ _podman_image.owner | default(omit) }}"
+  no_log: "{{ 'password' in _podman_image }}"
+  containers.podman.podman_image:
+    name: "{{ _podman_image.name }}"
+    password: "{{ _podman_image.password | default(omit) }}"
+    username: "{{ _podman_image.username | default(omit) }}"
+  register: _podman_image_pull
+  until: not _podman_image_pull.failed
+  retries: "{{ podman_retries }}"
+  delay: "{{ podman_delay }}"
+  # ... and compare the pulled image ID
+  changed_when: >-
+    (_podman_image_pull.image | map(attribute='Id') | list | last | default(None))
+    != (_podman_image_infos.images | map(attribute='Id') | list | last | default(None))
