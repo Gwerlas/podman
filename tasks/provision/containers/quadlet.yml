@@ -57,6 +57,32 @@
     loop_var: _podman_container
     label: "{{ _podman_container.name }}"
 
+# `state: quadlet` writes the file and pulls nothing : without this, the unit's
+# own `podman run` pulls the image as it starts, a pull podman bounds to five
+# minutes inside systemd, and a slower one fails the first start. The generated
+# path creates the container, hence pulls its image, before starting the unit;
+# here the image is pulled the same way, as the user who runs the container,
+# with the entry's credentials file and TLS setting. Nothing is pulled for
+# `pull: never`, nor for `rootfs`, whose image is a directory.
+- name: Pull the images of the containers
+  become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
+  become_user: "{{ _podman_container.run_as }}"
+  containers.podman.podman_image:
+    name: "{{ _podman_container.image }}"
+    auth_file: "{{ _podman_container.authfile | default(omit) }}"
+    validate_certs: "{{ _podman_container.tls_verify | default(omit) }}"
+  register: _podman_container_pull
+  until: not _podman_container_pull.failed
+  retries: "{{ podman_retries }}"
+  delay: "{{ podman_delay }}"
+  when:
+    - _podman_container.pull | default(none) != 'never'
+    - not _podman_container.rootfs | default(false)
+  loop: "{{ _podman_containers | rejectattr('state', 'eq', 'absent') }}"
+  loop_control:
+    loop_var: _podman_container
+    label: "{{ _podman_container.name }}"
+
 - name: Containers
   register: _podman_provisioned
   become: "{{ _podman_container.run_as != ansible_facts.user_id }}"
