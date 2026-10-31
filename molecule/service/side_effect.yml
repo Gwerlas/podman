@@ -1,0 +1,6 @@
+---
+# The same inventory, with the container converge.yml started now retired.
+- name: Retire a running container
+  ansible.builtin.import_playbook: converge.yml
+  vars:
+    retired_state: absent

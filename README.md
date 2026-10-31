@@ -319,8 +319,11 @@ podman_containers:
       container_prefix: app  # app-web.service
 ```
 
-`enabled: true` enables the unit and starts it. With `enabled: false`, podman
-brings the container to its `state` itself and writes the unit without
+`enabled: true` enables the unit, and `state` is what the unit is now :
+`started` starts it, `stopped` stops it, keeps its container and leaves it
+enabled, so it starts again at boot, `absent` stops and disables it, then
+removes it with its container. With `enabled: false`,
+podman brings the container to its `state` itself and writes the unit without
 enabling it, so the container does not come back after a reboot.
 
 ### Podman configuration

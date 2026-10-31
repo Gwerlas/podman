@@ -1,0 +1,3 @@
+bugfixes:
+  - >-
+    Below Podman 4.4, honour the ``state`` of an enabled container : ``absent`` now stops and disables its generated unit, then removes it with the container, where the container was kept and started again ; ``stopped`` leaves the unit stopped and enabled. An entry left at ``absent`` by mistake now loses its container. (`#52 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/52>`__)

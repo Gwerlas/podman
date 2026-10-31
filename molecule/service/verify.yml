@@ -286,6 +286,68 @@
           - mine_info.containers[0].Config.Umask == '0077'
         fail_msg: "Umask={{ mine_info.containers[0].Config.Umask }}"
 
+    - name: List the containers of a lingering user
+      become: true
+      become_user: nginx
+      containers.podman.podman_container_info:
+      register: nginx_before
+
+    - name: Read the units of the stopped and the retired containers
+      become: true
+      become_user: nginx
+      environment:
+        XDG_RUNTIME_DIR: /run/user/300
+        DBUS_SESSION_BUS_ADDRESS: unix:path=/run/user/300/bus
+      ansible.builtin.systemd:
+        name: "{{ quadlet | ternary('', 'container-') }}{{ item }}"
+        scope: user
+      loop:
+        - paused
+        - retired
+      register: nginx_units
+
+    - name: Look for the unit files of the retired container
+      become: true
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /data/web/.config/containers/systemd/retired.container
+        - /data/web/.config/systemd/user/container-retired.service
+      register: retired_files
+
+    # A generated unit is enabled and keeps its container ; a Quadlet one is
+    # never enabled, its [Install] section is what starts it at boot, and
+    # stopping it removes its container.
+    - name: Check the stopped container waits and the retired one is gone
+      vars:
+        names: "{{ nginx_before.containers | map(attribute='Name') | list }}"
+        paused: "{{ nginx_before.containers | selectattr('Name', 'eq', 'paused') | first | default({}) }}"
+        paused_unit: "{{ nginx_units.results[0].status }}"
+        retired_unit: "{{ nginx_units.results[1].status }}"
+      ansible.builtin.assert:
+        that:
+          - quadlet or not paused.State.Running | default(true)
+          - paused_unit.ActiveState == 'inactive'
+          - quadlet or paused_unit.UnitFileState == 'enabled'
+          - "'retired' not in names"
+          - retired_unit.LoadState == 'not-found'
+          - retired_files.results | selectattr('stat.exists') | list == []
+        fail_msg: >-
+          containers={{ names }}
+          paused={{ paused.State | default('missing') }}
+          paused_unit={{ paused_unit.ActiveState }}/{{ paused_unit.UnitFileState | default('') }}
+          retired_unit={{ retired_unit.LoadState }}
+          files={{ retired_files.results | selectattr('stat.exists') | map(attribute='item') | list }}
+
+    - name: Check the stopped and the retired containers do not answer
+      ansible.builtin.wait_for:
+        port: "{{ item }}"
+        state: stopped
+        timeout: 30
+      loop:
+        - 8085
+        - 8086
+
     - name: Reboot
       become: true
       ansible.builtin.reboot:
@@ -335,6 +397,6 @@
           {{ rootful_containers.containers | selectattr('State.Running') | map(attribute='Name') | sort }}
       ansible.builtin.assert:
         that:
-          - nginx_running == ['named', 'nginx']
+          - nginx_running == ['named', 'nginx', 'paused']
           - rootful_running == ['rootful']
         fail_msg: "nginx={{ nginx_running }} root={{ rootful_running }}"

@@ -74,6 +74,22 @@
           separator: _
         publish:
           - 8082:80
+      # `state: stopped` : the container exists and its unit is stopped, yet
+      # still starts at boot, so 8085 is silent before the reboot only.
+      - run_as: nginx
+        name: paused
+        image: docker.io/nginx:latest
+        state: stopped
+        publish:
+          - 8085:80
+      # Started here, then retired by side_effect.yml : its unit has to stop
+      # and go with the container, or 8086 answers again.
+      - run_as: nginx
+        name: retired
+        image: docker.io/nginx:latest
+        state: "{{ retired_state | default('started') }}"
+        publish:
+          - 8086:80
       # No `run_as` : it runs as the user the play runs as, and its unit goes
       # to that user's instance. That user does not linger, so 8083 is only
       # checked before the reboot, next to the unit being enabled. `umask` is
