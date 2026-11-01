@@ -1,3 +1,0 @@
-bugfixes:
-  - >-
-    On Podman 4.4 and later, pull each container's image before starting its Quadlet unit, as the user the container runs as, so that the first start no longer waits on the pull, which Podman bounds to five minutes inside systemd; ``pull: never`` still pulls nothing. (`#54 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/54>`__)

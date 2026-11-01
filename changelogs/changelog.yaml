@@ -14,6 +14,94 @@ releases:
           leave the distribution's files alone when none is set.
       release_summary: Initial version.
     release_date: '2023-02-12'
+  0.10.0:
+    changes:
+      breaking_changes:
+        - On Gentoo, stop writing a ``registries.conf`` that makes ``docker.io`` the
+          search registry. Set it with ``podman_registries_config``, or let ``podman_mimic_docker``
+          add it. (`#29 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/29>`__)
+        - 'Pass the whole entry of ``podman_containers`` to ``containers.podman.podman_container``,
+          so that every option of the installed collection works. A key the module
+          does not know now fails the play, where the role ignored it; and ``module_defaults``
+          set for ``containers.podman.podman_container`` no longer reach these containers:
+          write the options in each entry. (`#27 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/27>`__)'
+        - Render a ``podman_wrappers`` template under the variable ``_podman_wrapper``
+          instead of ``wrapper``, as the role no longer lets its loop variables take
+          the name of a user's. A template of your own, set with the ``template``
+          key of a wrapper, that reads ``wrapper`` has to read ``_podman_wrapper``
+          instead; the template the role ships is updated. (`#24 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/24>`__)
+        - Require ``containers.podman`` 1.17.0 or later; install it with ``ansible-galaxy
+          collection install 'containers.podman:>=1.17.0'`` before upgrading. (`#25
+          <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/25>`__)
+        - 'Run each ``podman_containers`` entry on a Quadlet unit, ``<name>.service``,
+          wherever Podman is 4.4 or later and systemd manages the services, in place
+          of the ``container-<name>.service`` that ``podman generate systemd`` wrote;
+          the next run retires the generated units and removes their containers, so
+          anything a container wrote outside a volume is lost: move it to a volume
+          before upgrading. A unit or a check that refers to ``container-<name>``
+          has to name ``<name>`` instead. Debian 11 and 12 and Ubuntu 22.04 keep the
+          generated units. (`#20 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/20>`__)'
+      bugfixes:
+        - A dry run no longer reports a pull of a ``podman_images`` entry the host
+          already holds; it still reports one the host does not hold yet. (`#55 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/55>`__)
+        - 'Below Podman 4.4, honour the ``state`` of an enabled container : ``absent``
+          now stops and disables its generated unit, then removes it with the container,
+          where the container was kept and started again ; ``stopped`` leaves the
+          unit stopped and enabled. An entry left at ``absent`` by mistake now loses
+          its container. (`#52 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/52>`__)'
+        - Enable the unit of a container under the ``generate_systemd`` separator
+          and ``container_prefix`` it was generated with. (`#25 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/25>`__)
+        - Merge the ``containers.conf``, ``storage.conf`` and ``libpod.conf`` settings
+          of a user into the distribution's, instead of replacing a whole table as
+          soon as the user names it. A ``null`` removes a setting. (`#16 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/16>`__)
+        - On Gentoo, build ``nftables`` with its ``json`` USE flag, so that rootful
+          containers on a bridge network start.
+        - On Gentoo, write the ``graphroot`` and ``runroot`` of ``storage.conf`` only
+          for Podman 5, so that rootless users keep their own store with Podman 6.
+          (`#35 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/35>`__)
+        - 'On Podman 4.4 and later, pull each container''s image before starting its
+          Quadlet unit, as the user the container runs as, so that the first start
+          no longer waits on the pull, which Podman bounds to five minutes inside
+          systemd; ``pull: never`` still pulls nothing. (`#54 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/54>`__)'
+        - Render the mirrors of a registry, instead of failing on them. (`#23 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/23>`__)
+        - Run a container without ``run_as`` as the user the play runs as, with the
+          systemd instance, the unit path, the privilege escalation and the check
+          for a service manager that follow. (`#26 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/26>`__)
+        - Start ``storage.conf`` from the paths Podman needs on the Debian family,
+          so that rootful Podman starts with a user's storage options. (`#28 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/28>`__)
+        - Stop setting ``packages``, ``sysctl`` and the variables the role registered
+          under bare names (``result``, ``infos``, ``provisioned``) in the play, where
+          they overrode a user's own; the role's internal variables now all start with ``_podman_``.
+          (`#24 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/24>`__)
+        - Write the configuration of Podman before installing its packages, so that
+          the store the Debian and Ubuntu packages create no longer refuses the driver
+          ``storage.conf`` names. (`#31 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/31>`__)
+      minor_changes:
+        - Carry over to ``storage.conf`` what the ``storage.conf`` of each distribution
+          sets, instead of losing it as soon as a storage option is set.
+        - Keep the development files out of the archive published on Ansible Galaxy.
+        - Stop requiring ``jmespath`` on the controller. (`#25 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/25>`__)
+      release_summary: Run containers on Quadlet units, and keep what each distribution
+        configures.
+    fragments:
+      - 0.10.0.yml
+      - configuration-before-packages.yml
+      - configuration-merge.yml
+      - container-options.yml
+      - container-owner.yml
+      - galaxy-archive.yml
+      - generated-units-state.yml
+      - gentoo-nftables-json.yml
+      - gentoo-podman-6-store.yml
+      - gentoo-registries.yml
+      - image-check-mode.yml
+      - quadlet-pull-first.yml
+      - quadlet.yml
+      - registry-mirrors.yml
+      - role-variable-prefix.yml
+      - storage-distribution-base.yml
+      - wrapper-template-variable.yml
+    release_date: '2026-11-01'
   0.2.0:
     changes:
       breaking_changes:

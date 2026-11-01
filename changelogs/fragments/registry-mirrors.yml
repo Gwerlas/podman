@@ -1,2 +1,0 @@
-bugfixes:
-  - Render the mirrors of a registry, instead of failing on them. (`#23 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/23>`__)
