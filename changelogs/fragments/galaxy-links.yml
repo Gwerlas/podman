@@ -1,0 +1,5 @@
+bugfixes:
+  - >-
+    The README links to the changelog, the requirements, the vars files and the
+    license by their address on GitLab, so that they also work on the role's
+    Ansible Galaxy page, where relative links led nowhere.

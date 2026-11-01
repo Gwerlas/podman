@@ -7,7 +7,7 @@ Install and configure podman in rootless mode.
 
 GitLab project : [yoanncolin/ansible/roles/podman](https://gitlab.com/yoanncolin/ansible/roles/podman)
 
-What each release changed : [CHANGELOG.md](CHANGELOG.md)
+What each release changed : [CHANGELOG.md][changelog]
 
 What it changes
 ---------------
@@ -39,7 +39,7 @@ The Linux base system configured with :
 Dependencies
 ------------
 
-Everything is in the [requirements.yml](requirements.yml) file.
+Everything is in the [requirements.yml][requirements] file.
 
 ### Collections
 
@@ -504,7 +504,7 @@ cgroup_manager = "cgroupfs"
 
 The `podman_compose_install`, `podman_toolbox_install` and `podman_mimic_docker`
 options enable extra features that rely on distribution packages. The exact
-package names mapped to each option are defined in the [`vars/`](vars/) files
+package names mapped to each option are defined in the [`vars/`][vars] files
 of this role.
 
 When the corresponding package is **not available** for the target distribution
@@ -667,4 +667,9 @@ An exemple of the way to be the more compatible with Docker as You can :
 License
 -------
 
-[BSD 3-Clause License](LICENSE).
+[BSD 3-Clause License][license].
+
+[changelog]: https://gitlab.com/yoanncolin/ansible/roles/podman/-/blob/main/CHANGELOG.md
+[requirements]: https://gitlab.com/yoanncolin/ansible/roles/podman/-/blob/main/requirements.yml
+[vars]: https://gitlab.com/yoanncolin/ansible/roles/podman/-/tree/main/vars
+[license]: https://gitlab.com/yoanncolin/ansible/roles/podman/-/blob/main/LICENSE
