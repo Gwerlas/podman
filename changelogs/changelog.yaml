@@ -71,8 +71,8 @@ releases:
           so that rootful Podman starts with a user's storage options. (`#28 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/28>`__)
         - Stop setting ``packages``, ``sysctl`` and the variables the role registered
           under bare names (``result``, ``infos``, ``provisioned``) in the play, where
-          they overrode a user's own; the role's internal variables now all start with ``_podman_``.
-          (`#24 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/24>`__)
+          they overrode a user's own; the role's internal variables now all start
+          with ``_podman_``. (`#24 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/24>`__)
         - Write the configuration of Podman before installing its packages, so that
           the store the Debian and Ubuntu packages create no longer refuses the driver
           ``storage.conf`` names. (`#31 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/31>`__)
@@ -101,6 +101,17 @@ releases:
       - role-variable-prefix.yml
       - storage-distribution-base.yml
       - wrapper-template-variable.yml
+    release_date: '2026-11-01'
+  0.10.1:
+    changes:
+      bugfixes:
+        - The README links to the changelog, the requirements, the vars files and
+          the license by their address on GitLab, so that they also work on the role's
+          Ansible Galaxy page, where relative links led nowhere.
+      release_summary: Fix the links of the README on the Galaxy page.
+    fragments:
+      - 0.10.1.yml
+      - galaxy-links.yml
     release_date: '2026-11-01'
   0.2.0:
     changes:
