@@ -1,0 +1,3 @@
+bugfixes:
+  - >-
+    A dry run no longer reports a pull of a ``podman_images`` entry the host already holds; it still reports one the host does not hold yet. (`#55 <https://gitlab.com/yoanncolin/ansible/roles/podman/-/issues/55>`__)

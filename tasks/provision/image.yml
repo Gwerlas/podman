@@ -1,5 +1,9 @@
 ---
-# Due to an idempotency issue in containers.podman.podman_image, we have to get informations first...
+# containers.podman.podman_image checks `podman image exists NAME`, then
+# trusts `podman image ls NAME`, which finds no fully qualified docker.io name
+# on Podman 4.3 and older: the module pulls again on every run and reports a
+# change. The image ID read before is compared with the pulled one instead,
+# until the collection is fixed (#56).
 - name: Image info
   become: "{{ 'owner' in _podman_image }}"
   become_user: "{{ _podman_image.owner | default(omit) }}"
@@ -20,7 +24,9 @@
   until: not _podman_image_pull.failed
   retries: "{{ podman_retries }}"
   delay: "{{ podman_delay }}"
-  # ... and compare the pulled image ID
+  # A dry run pulls nothing, so there is no ID to compare: a change is an
+  # image the host does not hold yet.
   changed_when: >-
-    (_podman_image_pull.image | map(attribute='Id') | list | last | default(None))
-    != (_podman_image_infos.images | map(attribute='Id') | list | last | default(None))
+    (_podman_image_infos.images | length == 0) if ansible_check_mode else
+    ((_podman_image_pull.image | map(attribute='Id') | list | last | default(None))
+    != (_podman_image_infos.images | map(attribute='Id') | list | last | default(None)))
