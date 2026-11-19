@@ -326,6 +326,10 @@ removes it with its container. With `enabled: false`,
 podman brings the container to its `state` itself and writes the unit without
 enabling it, so the container does not come back after a reboot.
 
+When a managed container needs replacement, the role stops its unit, reloads
+systemd with the regenerated unit and applies the requested service state.
+Containers with unchanged configuration keep running.
+
 ### Podman configuration
 
 By default, we let the configuration files of the distribution inchanged,

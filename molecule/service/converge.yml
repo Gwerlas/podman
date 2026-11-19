@@ -69,9 +69,14 @@
       - run_as: nginx
         name: named
         image: docker.io/nginx:latest
+        env:
+          SERVICE_REVISION: "{{ service_revision | default('initial') }}"
         generate_systemd:
           container_prefix: app
           separator: _
+          # The unit must stay stopped during replacement even when nginx
+          # exits cleanly in response to Podman's stop signal.
+          restart_policy: always
         publish:
           - 8082:80
       # `state: stopped` : the container exists and its unit is stopped, yet

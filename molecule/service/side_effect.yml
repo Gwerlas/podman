@@ -1,6 +1,76 @@
 ---
-# The same inventory, with the container converge.yml started now retired.
-- name: Retire a running container
+- name: Read the running containers before replacement
+  hosts: all
+  tasks:
+    - name: Inspect the services before replacement
+      become: true
+      become_user: nginx
+      containers.podman.podman_container_info:
+        name:
+          - named
+          - nginx
+      register: _podman_services_before
+
+- name: Replace a running container and retire another
   ansible.builtin.import_playbook: converge.yml
   vars:
     retired_state: absent
+    service_revision: updated
+
+- name: Verify only the changed service was restarted
+  hosts: all
+  tasks:
+    - name: Inspect the services after replacement
+      become: true
+      become_user: nginx
+      containers.podman.podman_container_info:
+        name:
+          - named
+          - nginx
+      register: _podman_services_after
+
+    - name: Check replacement and uninterrupted service for the unchanged container
+      vars:
+        _podman_named_before: "{{ _podman_services_before.containers | selectattr('Name', 'eq', 'named') | first }}"
+        _podman_named_after: "{{ _podman_services_after.containers | selectattr('Name', 'eq', 'named') | first }}"
+        _podman_nginx_before: "{{ _podman_services_before.containers | selectattr('Name', 'eq', 'nginx') | first }}"
+        _podman_nginx_after: "{{ _podman_services_after.containers | selectattr('Name', 'eq', 'nginx') | first }}"
+      ansible.builtin.assert:
+        that:
+          - _podman_named_after.Id != _podman_named_before.Id
+          - "'SERVICE_REVISION=updated' in _podman_named_after.Config.Env"
+          - _podman_nginx_after.Id == _podman_nginx_before.Id
+          - _podman_nginx_after.State.StartedAt == _podman_nginx_before.State.StartedAt
+          - _podman_nginx_after.State.Running
+
+    - name: Read the regenerated unit
+      when: podman_version is version('4.4', '<')
+      become: true
+      become_user: nginx
+      environment:
+        XDG_RUNTIME_DIR: /run/user/300
+        DBUS_SESSION_BUS_ADDRESS: unix:path=/run/user/300/bus
+      ansible.builtin.systemd:
+        name: app_named
+        scope: user
+      register: _podman_replaced_unit
+
+    - name: Check systemd owns the replacement without an automatic restart
+      when: podman_version is version('4.4', '<')
+      vars:
+        _podman_named_after: "{{ _podman_services_after.containers | selectattr('Name', 'eq', 'named') | first }}"
+      ansible.builtin.assert:
+        that:
+          - _podman_replaced_unit.status.ActiveState == 'active'
+          - _podman_replaced_unit.status.PIDFile == _podman_named_after.ConmonPidFile
+          - _podman_replaced_unit.status.NRestarts | int == 0
+
+    - name: Test the replacement service before reboot
+      ansible.builtin.uri:
+        url: http://localhost:8082
+        method: HEAD
+        use_proxy: false
+      register: _podman_replacement_http
+      until: _podman_replacement_http.status == 200
+      retries: 5
+      delay: 1

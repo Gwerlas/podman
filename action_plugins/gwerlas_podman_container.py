@@ -7,6 +7,7 @@
 # An action plugin can : it passes the dict on as data, and the module's own
 # argument spec rejects an option it does not know.
 
+from ansible.errors import AnsibleActionFail
 from ansible.plugins.action import ActionBase
 
 
@@ -18,12 +19,28 @@ class ActionModule(ActionBase):
         result = super().run(tmp, task_vars)
 
         _, args = self.validate_argument_spec(
-            argument_spec={'options': {'type': 'dict', 'required': True}},
+            argument_spec={
+                'options': {'type': 'dict', 'required': True},
+                'preview_replacement': {'type': 'bool', 'default': False},
+            },
         )
+        options = args['options']
+        if args['preview_replacement']:
+            if not self._task.check_mode:
+                raise AnsibleActionFail('preview_replacement requires check mode')
+            options = options.copy()
+            # Unit generation writes to its configured path even in check mode.
+            # Keep the implicit rm from generate_systemd.new for the comparison.
+            if options.pop('generate_systemd', {}).get('new'):
+                options.pop('remove', None)
+                options.pop('auto_remove', None)
+                options['rm'] = True
+            options.pop('restart', None)
+            options['force_restart'] = False
 
         result.update(self._execute_module(
             module_name='containers.podman.podman_container',
-            module_args=args['options'],
+            module_args=options,
             task_vars=task_vars,
         ))
         return result
