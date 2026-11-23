@@ -444,6 +444,18 @@ fragment behind or that `changelogs/changelog.yaml` does not hold a release
 for; `jobs/changelog-release` runs the same check locally, with
 `CI_COMMIT_TAG` set.
 
+Galaxy imports from the GitHub mirror of the role, which GitLab updates on its
+own schedule. The `import` job (`jobs/import`) therefore waits until
+`git ls-remote --tags https://github.com/gwerlas/podman refs/tags/$CI_COMMIT_TAG`
+answers, for ten minutes at most (40 tries, 15 seconds apart). Past that it
+fails, saying the mirror does not have the tag yet. The variables `MIRROR_URL`,
+`MIRROR_WAIT_ATTEMPTS` and `MIRROR_WAIT_DELAY` set the mirror, the number of
+tries and the seconds between them. Retry the job once the
+mirror has the tag; if it does not get it, force a sync of the mirror in the
+project's repository settings. To publish by hand, with the mirror up to date
+and a Galaxy token in `GALAXY_TOKEN`, run `ansible-galaxy role import --token
+"$GALAXY_TOKEN" Gwerlas podman`.
+
 [`.gitattributes`](.gitattributes) lists what stays out of the archive users
 install: Molecule, CI, the job scripts, the changelog sources, the tagged-run
 playbook, linter and editor settings, this guide. A new file that only serves

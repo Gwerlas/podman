@@ -232,6 +232,6 @@ import:
   interruptible: false
   needs:
     - changelog-release
-  script: ansible-galaxy role import --token $GALAXY_TOKEN Gwerlas podman
+  script: jobs/import
   rules:
     - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG'
