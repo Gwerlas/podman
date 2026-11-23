@@ -113,6 +113,18 @@ releases:
       - 0.10.1.yml
       - galaxy-links.yml
     release_date: '2026-11-01'
+  0.10.2:
+    changes:
+      bugfixes:
+        - On hosts with Podman older than 4.4, such as Debian 11, Debian 12 and Ubuntu
+          22.04, stop generated systemd units before replacing their containers to
+          prevent automatic restarts during replacement.
+      release_summary: Stop the generated units before replacing their containers
+        on Podman older than 4.4.
+    fragments:
+      - 0.10.2.yml
+      - stop-generated-units-before-replacement.yml
+    release_date: '2026-11-23'
   0.2.0:
     changes:
       breaking_changes:
